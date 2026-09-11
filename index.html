@@ -2806,18 +2806,17 @@
   }
 </style>
 <script type="module">
-  // ⚠️ REPLACE 'YOUR_PROJECT_URL' below with your actual Supabase project
-  // URL — found in your Supabase dashboard under Project Settings > API.
-  // This key is a "publishable" key, which is meant to be public/embedded
-  // client-side — it's not a secret like a service_role key.
+  // Supabase project credentials. The key below is a "publishable" key,
+  // which is meant to be public/embedded client-side — it's not a secret
+  // like a service_role key.
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  const SUPABASE_URL = 'YOUR_PROJECT_URL';
-  const SUPABASE_KEY = 'sb_publishable_DmbqXdP8SBhyqgd9eHpNcw_OEx4QeYH';
+  const SUPABASE_URL = "https://kdoaelycnybmxudapenk.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_DmbqXdP8SBhyqgd9eHpNcw_OEx4QeYH";
 
   try{
     if (!SUPABASE_URL.startsWith('http')){
-      throw new Error("SUPABASE_URL is still the placeholder 'YOUR_PROJECT_URL' — replace it above with your real project URL from Supabase > Project Settings > API.");
+      throw new Error('SUPABASE_URL does not look like a valid URL — check it against Supabase > Project Settings > API.');
     }
     window.supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
   } catch(err){
@@ -3433,7 +3432,22 @@
 
     <div class="settings-section">
       <div class="settings-section-title">Account</div>
-      <div class="settings-section-desc">Sign out of this device. You'll need your PIN to get back in.</div>
+      <div class="settings-section-desc">The username and email tied to your login. Changing your email requires confirming it from a link sent to the new address.</div>
+      <div class="field">
+        <label for="settings-username-input">Username</label>
+        <input type="text" id="settings-username-input" class="settings-text-input" placeholder="Username" style="width:100%;">
+      </div>
+      <div class="field">
+        <label for="settings-email-input">Email</label>
+        <input type="email" id="settings-email-input" class="settings-text-input" placeholder="you@example.com" style="width:100%;">
+      </div>
+      <button type="button" id="settings-account-save" class="backup-btn backup-btn-primary">Save Account Info</button>
+      <div class="backup-note" id="settings-account-note"></div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Session</div>
+      <div class="settings-section-desc">Sign out of this device.</div>
       <button type="button" id="logout-btn" class="backup-btn backup-btn-secondary">Log out</button>
     </div>
 
@@ -3878,7 +3892,7 @@
     ? window.storage
     : (window.__BINDER_FORCE_BRIDGE__ ? bridgeStorageApi : indexedDbStorageApi);
 
-  let data = { active: [], sold: [], shows: [], submissions: [], giveaways: [] };
+  let data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null };
   let currentTab = 'active';
   let sortMode = 'recent';
   let allInventorySortMode = 'name';
@@ -3944,8 +3958,6 @@
 
   // ---------- Profile photo (Dashboard display + Settings control) ----------
 
-  const PROFILE_PHOTO_KEY = 'tcg-profile-photo';
-
   function setProfileAvatarImage(dataUrl){
     ['profile-avatar-img', 'settings-avatar-img', 'settings-header-avatar-img'].forEach(id => {
       const el = document.getElementById(id);
@@ -3970,15 +3982,10 @@
     document.getElementById('settings-photo-remove').style.display = 'none';
   }
 
-  async function loadProfilePhoto(){
-    try{
-      const result = await storageApi.get(PROFILE_PHOTO_KEY, false);
-      if (result && result.value){
-        setProfileAvatarImage(result.value);
-      } else {
-        clearProfileAvatarDisplay();
-      }
-    } catch(e){
+  function applyProfilePhotoToUI(){
+    if (data.profilePhoto){
+      setProfileAvatarImage(data.profilePhoto);
+    } else {
       clearProfileAvatarDisplay();
     }
   }
@@ -3999,7 +4006,8 @@
     try{
       const dataUrl = await resizePhoto(file);
       setProfileAvatarImage(dataUrl);
-      await storageApi.set(PROFILE_PHOTO_KEY, dataUrl, false);
+      data.profilePhoto = dataUrl;
+      await saveData();
     } catch(err){
       console.error('Could not save logo photo', err);
     }
@@ -4009,26 +4017,24 @@
   document.getElementById('settings-photo-remove').addEventListener('click', async (e) => {
     e.stopPropagation();
     clearProfileAvatarDisplay();
+    data.profilePhoto = null;
     try{
-      const current = await storageApi.get(PROFILE_PHOTO_KEY, false);
-      if (current) await storageApi.delete(PROFILE_PHOTO_KEY, false);
-    } catch(err){ /* nothing stored — fine */ }
+      await saveData();
+    } catch(err){
+      console.error('Could not remove logo photo', err);
+    }
   });
 
   // ---------- Store Name (Settings) ----------
+  // Store name lives in the same per-account Supabase row as the rest of
+  // the inventory data — a brand-new account starts with none set, and
+  // it's never shared between different logged-in accounts on this device.
 
-  const STORE_NAME_KEY = 'tcg-store-name';
-  const DEFAULT_STORE_NAME = 'JSBreakz';
-
-  async function loadStoreName(){
-    let name = DEFAULT_STORE_NAME;
-    try{
-      const result = await storageApi.get(STORE_NAME_KEY, false);
-      if (result && result.value) name = result.value;
-    } catch(e){ /* none stored yet — use default */ }
-    document.getElementById('dash-username').textContent = name;
+  function applyStoreNameToUI(){
+    const name = data.storeName || '';
+    document.getElementById('dash-username').textContent = name || 'there';
     document.getElementById('settings-store-name-input').value = name;
-    document.getElementById('settings-header-name').textContent = name;
+    document.getElementById('settings-header-name').textContent = name || 'Add your store name';
   }
 
   document.getElementById('settings-store-name-save').addEventListener('click', async () => {
@@ -4040,14 +4046,68 @@
       return;
     }
     try{
-      await storageApi.set(STORE_NAME_KEY, name, false);
-      document.getElementById('dash-username').textContent = name;
-      document.getElementById('settings-header-name').textContent = name;
+      data.storeName = name;
+      await saveData();
+      applyStoreNameToUI();
       noteEl.textContent = 'Saved.';
       noteEl.className = 'backup-note success';
     } catch(err){
       console.error('Could not save store name', err);
       noteEl.textContent = 'Could not save. Please try again.';
+      noteEl.className = 'backup-note error';
+    }
+  });
+
+  // ---------- Account (username/email — Supabase Auth) ----------
+  // Username is stored in Supabase's user_metadata (there's no separate
+  // "username" field on auth.users by default). Email changes go through
+  // Supabase's normal confirm-via-email flow, so the change won't take
+  // effect immediately — the user needs to click the confirmation link
+  // sent to their new address first.
+
+  async function loadAccountInfo(){
+    try{
+      const { data: authData, error } = await window.supabase.auth.getUser();
+      if (error || !authData.user) throw error || new Error('Not logged in');
+      const user = authData.user;
+      document.getElementById('settings-username-input').value = (user.user_metadata && user.user_metadata.username) || '';
+      document.getElementById('settings-email-input').value = user.email || '';
+    } catch(err){
+      console.error('Could not load account info', err);
+    }
+  }
+
+  document.getElementById('settings-account-save').addEventListener('click', async () => {
+    const noteEl = document.getElementById('settings-account-note');
+    const username = document.getElementById('settings-username-input').value.trim();
+    const email = document.getElementById('settings-email-input').value.trim();
+
+    if (!email){
+      noteEl.textContent = 'Email can\u2019t be empty.';
+      noteEl.className = 'backup-note error';
+      return;
+    }
+
+    try{
+      const { data: authData, error: authError } = await window.supabase.auth.getUser();
+      if (authError || !authData.user) throw authError || new Error('Not logged in');
+      const currentEmail = authData.user.email;
+
+      const updatePayload = { data: { username } };
+      if (email !== currentEmail) updatePayload.email = email;
+
+      const { error } = await window.supabase.auth.updateUser(updatePayload);
+      if (error) throw error;
+
+      if (email !== currentEmail){
+        noteEl.textContent = 'Saved. Check your new email address for a confirmation link — the email change won\u2019t take effect until you click it.';
+      } else {
+        noteEl.textContent = 'Saved.';
+      }
+      noteEl.className = 'backup-note success';
+    } catch(err){
+      console.error('Could not update account info', err);
+      noteEl.textContent = err.message || 'Could not save. Please try again.';
       noteEl.className = 'backup-note error';
     }
   });
@@ -4118,13 +4178,19 @@
         data.shows = Array.isArray(parsed.shows) ? parsed.shows : [];
         data.submissions = Array.isArray(parsed.submissions) ? parsed.submissions : [];
         data.giveaways = Array.isArray(parsed.giveaways) ? parsed.giveaways : [];
+        // A brand-new account has no store name or photo saved yet —
+        // both stay blank/null until set in Settings, per-account.
+        data.storeName = typeof parsed.storeName === 'string' ? parsed.storeName : '';
+        data.profilePhoto = parsed.profilePhoto || null;
       }
     } catch(e){
       // No row for this user yet (first time logging in) — start fresh.
       // The first saveData() call will create it.
       console.error('Could not load inventory from Supabase', e);
-      data = { active: [], sold: [], shows: [], submissions: [], giveaways: [] };
+      data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null };
     }
+    applyStoreNameToUI();
+    applyProfilePhotoToUI();
     document.getElementById('loading-msg').style.display = 'none';
     document.getElementById('sort-bar').style.display = 'flex';
     render();
@@ -5760,12 +5826,6 @@
   async function exportFullBackup(){
     setBackupNote('Preparing backup…');
     try{
-      let profilePhoto = null;
-      try{
-        const photoResult = await storageApi.get(PROFILE_PHOTO_KEY, false);
-        if (photoResult && photoResult.value) profilePhoto = photoResult.value;
-      } catch(e){ /* no photo set — fine */ }
-
       const backup = {
         app: 'VendorDEX',
         formatVersion: BACKUP_FORMAT_VERSION,
@@ -5773,7 +5833,10 @@
         active: data.active,
         sold: data.sold,
         shows: data.shows,
-        profilePhoto: profilePhoto
+        submissions: data.submissions,
+        giveaways: data.giveaways,
+        storeName: data.storeName,
+        profilePhoto: data.profilePhoto
       };
 
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -5822,12 +5885,13 @@
             data.active = parsed.active;
             data.sold = parsed.sold;
             data.shows = Array.isArray(parsed.shows) ? parsed.shows : [];
+            data.submissions = Array.isArray(parsed.submissions) ? parsed.submissions : [];
+            data.giveaways = Array.isArray(parsed.giveaways) ? parsed.giveaways : [];
+            data.storeName = typeof parsed.storeName === 'string' ? parsed.storeName : data.storeName;
+            data.profilePhoto = parsed.profilePhoto || data.profilePhoto;
             await saveData();
-
-            if (parsed.profilePhoto){
-              await storageApi.set(PROFILE_PHOTO_KEY, parsed.profilePhoto, false);
-              setProfileAvatarImage(parsed.profilePhoto);
-            }
+            applyStoreNameToUI();
+            applyProfilePhotoToUI();
 
             render();
             setBackupNote('Backup restored.', 'success');
@@ -6684,6 +6748,25 @@
 
   let cachedExploreSets = null;
 
+  // Retries a failing async operation automatically, with increasing delay
+  // between attempts, up to maxAttempts. Calls onRetry before each wait so
+  // the UI can show live progress instead of just a static spinner. If all
+  // attempts fail, the final error is thrown to the caller.
+  async function withAutoRetry(fn, onRetry, maxAttempts = 6){
+    let attempt = 0;
+    while (true){
+      attempt++;
+      try{
+        return await fn();
+      } catch(err){
+        if (attempt >= maxAttempts) throw err;
+        const delaySeconds = Math.min(attempt * 2, 10);
+        if (onRetry) onRetry(attempt, maxAttempts, delaySeconds, err);
+        await new Promise(r => setTimeout(r, delaySeconds * 1000));
+      }
+    }
+  }
+
   async function fetchExploreSets(){
     if (cachedExploreSets) return cachedExploreSets;
     // Note: no `orderBy` param here — the official docs only list q/page/pageSize
@@ -6691,25 +6774,13 @@
     // orderBy). Sending an unsupported orderBy value was causing the API's
     // server to return a 500. We sort client-side instead, after fetching.
     const url = 'https://api.pokemontcg.io/v2/sets?pageSize=250';
-    let lastErr;
-    for (let attempt = 0; attempt < 2; attempt++){
-      try{
-        const res = await fetch(url, { headers: { 'X-Api-Key': apiKeys.pokemontcg } });
-        if (!res.ok) throw new Error('Set list request failed: ' + res.status);
-        const json = await res.json();
-        const sets = json.data || [];
-        sets.sort((a, b) => (b.releaseDate || '').localeCompare(a.releaseDate || ''));
-        cachedExploreSets = sets;
-        return cachedExploreSets;
-      } catch(err){
-        lastErr = err;
-        // "Failed to fetch" means the request never got a response at all
-        // (dropped connection, brief outage, etc.) — worth one quick retry
-        // before giving up, rather than failing on a single transient blip.
-        if (attempt === 0) await new Promise(r => setTimeout(r, 900));
-      }
-    }
-    throw lastErr;
+    const res = await fetch(url, { headers: { 'X-Api-Key': apiKeys.pokemontcg } });
+    if (!res.ok) throw new Error('Set list request failed: ' + res.status);
+    const json = await res.json();
+    const sets = json.data || [];
+    sets.sort((a, b) => (b.releaseDate || '').localeCompare(a.releaseDate || ''));
+    cachedExploreSets = sets;
+    return cachedExploreSets;
   }
 
   async function renderExploreSetsList(){
@@ -6719,7 +6790,12 @@
     listEl.innerHTML = '<div class="explore-loading">Loading sets…</div>';
 
     try{
-      const sets = await fetchExploreSets();
+      const sets = await withAutoRetry(
+        fetchExploreSets,
+        (attempt, max, delay) => {
+          listEl.innerHTML = `<div class="explore-loading">Still trying to load sets\u2026 (attempt ${attempt} of ${max}, retrying in ${delay}s)</div>`;
+        }
+      );
       listEl.innerHTML = sets.map(s => `
         <button type="button" class="explore-set-item" data-set-id="${escapeHtml(s.id)}" data-set-name="${escapeHtml(s.name)}">
           <div class="explore-set-logo-wrap">
@@ -6737,7 +6813,11 @@
       });
     } catch(err){
       console.error('Could not load set list', err);
-      listEl.innerHTML = `<div class="explore-loading">Could not load sets. Details: ${escapeHtml(describeError(err))}.</div>`;
+      listEl.innerHTML = `
+        <div class="explore-loading">Could not load sets after several attempts. Details: ${escapeHtml(describeError(err))}.</div>
+        <button type="button" id="explore-sets-retry-btn" class="explore-back-btn" style="margin:12px auto 0; display:block;">Try Again</button>
+      `;
+      document.getElementById('explore-sets-retry-btn').addEventListener('click', renderExploreSetsList);
     }
   }
 
@@ -6753,11 +6833,18 @@
     grid.innerHTML = '<div class="explore-loading">Loading cards…</div>';
 
     try{
-      const url = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent('set.id:' + setId)}&pageSize=250&orderBy=number`;
-      const res = await fetch(url, { headers: { 'X-Api-Key': apiKeys.pokemontcg } });
-      if (!res.ok) throw new Error('Card list request failed: ' + res.status);
-      const json = await res.json();
-      const cards = json.data || [];
+      const cards = await withAutoRetry(
+        async () => {
+          const url = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent('set.id:' + setId)}&pageSize=250&orderBy=number`;
+          const res = await fetch(url, { headers: { 'X-Api-Key': apiKeys.pokemontcg } });
+          if (!res.ok) throw new Error('Card list request failed: ' + res.status);
+          const json = await res.json();
+          return json.data || [];
+        },
+        (attempt, max, delay) => {
+          grid.innerHTML = `<div class="explore-loading">Still trying to load cards\u2026 (attempt ${attempt} of ${max}, retrying in ${delay}s)</div>`;
+        }
+      );
 
       if (cards.length === 0){
         grid.style.display = 'none';
@@ -7358,8 +7445,7 @@
     document.getElementById('screen-pin').style.display = 'none';
     document.getElementById('app-shell').style.display = 'block';
     await loadData();
-    loadProfilePhoto();
-    loadStoreName();
+    loadAccountInfo();
     loadApiKeys();
   }
 
@@ -7403,7 +7489,7 @@
     errorEl.style.display = 'none';
 
     if (!window.supabase){
-      errorEl.textContent = 'Supabase isn\u2019t configured — the project URL in the code is still a placeholder. Replace SUPABASE_URL in the <head> with your real Supabase project URL.';
+      errorEl.textContent = 'Supabase failed to load — check the browser console for details, and confirm SUPABASE_URL/SUPABASE_KEY near the top of the file are correct.';
       errorEl.style.display = 'block';
       return;
     }
