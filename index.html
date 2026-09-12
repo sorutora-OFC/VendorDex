@@ -337,6 +337,17 @@
     padding: 0;
   }
   .auth-toggle-btn:hover{ text-decoration: underline; }
+  .auth-legal-link{
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Open Sans', sans-serif;
+    font-size: 11px;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+  .auth-legal-link:hover{ color: var(--gold); }
   .auth-link{
     display: block;
     width: 100%;
@@ -2436,6 +2447,22 @@
     gap: 12px;
   }
 
+  /* Cards-in-a-set (Explore) grid is made of small, self-contained tiles
+     (photo + name + number), so on phones it can comfortably show 2-3
+     columns instead of the 1-per-row the shared 230px minimum forces. */
+  @media (max-width: 640px){
+    #explore-cards-grid.grid{
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+    }
+  }
+  @media (max-width: 380px){
+    #explore-cards-grid.grid{
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+  }
+
   .card-tile{
     position: relative;
     background: var(--sleeve);
@@ -2905,7 +2932,17 @@
       <span id="auth-toggle-text">Don't have an account?</span>
       <button type="button" id="auth-toggle-btn" class="auth-toggle-btn">Sign Up</button>
     </div>
-    <div class="auth-note">Your account is managed by Supabase. Your inventory data itself is still stored locally in this browser, separate from your login.</div>
+    <div class="auth-note">By continuing, you agree to our <button type="button" id="auth-terms-link" class="auth-legal-link">Terms of Use</button> and <button type="button" id="auth-privacy-link" class="auth-legal-link">Privacy Policy</button>.</div>
+  </div>
+
+  <div id="legal-modal-overlay" class="scan-modal-overlay" style="display:none;">
+    <div class="scan-modal">
+      <div class="scan-modal-header">
+        <div class="scan-modal-title" id="legal-modal-title">Terms of Use</div>
+        <button type="button" id="legal-modal-close" class="scan-modal-close">&times;</button>
+      </div>
+      <div class="scan-modal-body" id="legal-modal-body" style="max-height: 60vh; overflow-y: auto; font-family:'Open Sans', sans-serif; font-size: 13px; line-height: 1.6; color: var(--muted);"></div>
+    </div>
   </div>
 
   <div id="app-shell" style="display:none;">
@@ -3374,16 +3411,6 @@
     <div class="dash-welcome">Settings</div>
 
     <div class="settings-section">
-      <div class="settings-section-title">Store Name</div>
-      <div class="settings-section-desc">This is the name shown in the "Welcome back" greeting on your Dashboard.</div>
-      <div class="settings-row">
-        <input type="text" id="settings-store-name-input" class="settings-text-input" placeholder="Store name">
-        <button type="button" id="settings-store-name-save" class="backup-btn backup-btn-primary">Save</button>
-      </div>
-      <div class="backup-note" id="settings-store-name-note"></div>
-    </div>
-
-    <div class="settings-section">
       <div class="settings-section-title">API Keys</div>
       <div class="settings-section-desc">Used to identify and price cards via Scan Card, Search Cards, and Look Up Price in the Store tab. Stored locally in this browser, not in the app's source file. Leave a field blank and save to reset it back to the built-in default.</div>
       <div class="api-key-field">
@@ -3432,7 +3459,7 @@
 
     <div class="settings-section">
       <div class="settings-section-title">Account</div>
-      <div class="settings-section-desc">The username and email tied to your login. Changing your email requires confirming it from a link sent to the new address.</div>
+      <div class="settings-section-desc">The username and email tied to your login. Your username is also shown in the "Welcome back" greeting on your Dashboard. Changing your email requires confirming it from a link sent to the new address.</div>
       <div class="field">
         <label for="settings-username-input">Username</label>
         <input type="text" id="settings-username-input" class="settings-text-input" placeholder="Username" style="width:100%;">
@@ -3892,7 +3919,7 @@
     ? window.storage
     : (window.__BINDER_FORCE_BRIDGE__ ? bridgeStorageApi : indexedDbStorageApi);
 
-  let data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null };
+  let data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, dataVersion: 1 };
   let currentTab = 'active';
   let sortMode = 'recent';
   let allInventorySortMode = 'name';
@@ -4025,38 +4052,16 @@
     }
   });
 
-  // ---------- Store Name (Settings) ----------
-  // Store name lives in the same per-account Supabase row as the rest of
-  // the inventory data — a brand-new account starts with none set, and
-  // it's never shared between different logged-in accounts on this device.
+  // ---------- Username display (Dashboard greeting / Settings header) ----------
+  // The username lives in Supabase Auth's user_metadata (see Account section
+  // below) — it's the single source of truth for the "Welcome back" greeting
+  // on the Dashboard and the name shown at the top of Settings.
 
-  function applyStoreNameToUI(){
-    const name = data.storeName || '';
-    document.getElementById('dash-username').textContent = name || 'there';
-    document.getElementById('settings-store-name-input').value = name;
-    document.getElementById('settings-header-name').textContent = name || 'Add your store name';
+  function applyUsernameToUI(name){
+    const n = (name || '').trim();
+    document.getElementById('dash-username').textContent = n || 'there';
+    document.getElementById('settings-header-name').textContent = n || 'Add your username';
   }
-
-  document.getElementById('settings-store-name-save').addEventListener('click', async () => {
-    const noteEl = document.getElementById('settings-store-name-note');
-    const name = document.getElementById('settings-store-name-input').value.trim();
-    if (!name){
-      noteEl.textContent = 'Enter a store name before saving.';
-      noteEl.className = 'backup-note error';
-      return;
-    }
-    try{
-      data.storeName = name;
-      await saveData();
-      applyStoreNameToUI();
-      noteEl.textContent = 'Saved.';
-      noteEl.className = 'backup-note success';
-    } catch(err){
-      console.error('Could not save store name', err);
-      noteEl.textContent = 'Could not save. Please try again.';
-      noteEl.className = 'backup-note error';
-    }
-  });
 
   // ---------- Account (username/email — Supabase Auth) ----------
   // Username is stored in Supabase's user_metadata (there's no separate
@@ -4070,8 +4075,10 @@
       const { data: authData, error } = await window.supabase.auth.getUser();
       if (error || !authData.user) throw error || new Error('Not logged in');
       const user = authData.user;
-      document.getElementById('settings-username-input').value = (user.user_metadata && user.user_metadata.username) || '';
+      const username = (user.user_metadata && user.user_metadata.username) || '';
+      document.getElementById('settings-username-input').value = username;
       document.getElementById('settings-email-input').value = user.email || '';
+      applyUsernameToUI(username);
     } catch(err){
       console.error('Could not load account info', err);
     }
@@ -4098,6 +4105,8 @@
 
       const { error } = await window.supabase.auth.updateUser(updatePayload);
       if (error) throw error;
+
+      applyUsernameToUI(username);
 
       if (email !== currentEmail){
         noteEl.textContent = 'Saved. Check your new email address for a confirmation link — the email change won\u2019t take effect until you click it.';
@@ -4160,6 +4169,30 @@
   // their own row (see setup notes). If your actual table/column names
   // differ, update the .from('inventory') / .select('data') calls below.
 
+  // ---------- Data versioning / migrations ----------
+  // Bump this whenever a change alters what a saved field means or how
+  // it's shaped (renaming, restructuring, splitting a field, etc). Purely
+  // additive fields (a brand-new field with a safe default) don't need a
+  // version bump or a migration — see the note in the "how to manage
+  // updates" conversation for the full breakdown.
+  const CURRENT_DATA_VERSION = 1;
+
+  function migrateData(parsed){
+    // Existing rows saved before this field existed have no dataVersion —
+    // treat those as version 0.
+    let fromVersion = typeof parsed.dataVersion === 'number' ? parsed.dataVersion : 0;
+
+    // Add a new block here each time CURRENT_DATA_VERSION is bumped, e.g.:
+    // if (fromVersion < 2){
+    //   parsed.someNewShape = convertFromOldShape(parsed.someOldField);
+    //   delete parsed.someOldField;
+    //   fromVersion = 2;
+    // }
+
+    parsed.dataVersion = CURRENT_DATA_VERSION;
+    return parsed;
+  }
+
   async function loadData(){
     try{
       const { data: authData, error: authError } = await window.supabase.auth.getUser();
@@ -4171,7 +4204,7 @@
         .eq('user_id', authData.user.id);
       if (error) throw error;
 
-      const parsed = rows && rows.length > 0 ? rows[0].data : null;
+      const parsed = rows && rows.length > 0 ? migrateData(rows[0].data || {}) : null;
       if (parsed){
         data.active = Array.isArray(parsed.active) ? parsed.active : [];
         data.sold = Array.isArray(parsed.sold) ? parsed.sold : [];
@@ -4182,14 +4215,14 @@
         // both stay blank/null until set in Settings, per-account.
         data.storeName = typeof parsed.storeName === 'string' ? parsed.storeName : '';
         data.profilePhoto = parsed.profilePhoto || null;
+        data.dataVersion = parsed.dataVersion;
       }
     } catch(e){
       // No row for this user yet (first time logging in) — start fresh.
       // The first saveData() call will create it.
       console.error('Could not load inventory from Supabase', e);
-      data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null };
+      data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, dataVersion: CURRENT_DATA_VERSION };
     }
-    applyStoreNameToUI();
     applyProfilePhotoToUI();
     document.getElementById('loading-msg').style.display = 'none';
     document.getElementById('sort-bar').style.display = 'flex';
@@ -5882,6 +5915,7 @@
         async () => {
           setBackupNote('Restoring…');
           try{
+            migrateData(parsed);
             data.active = parsed.active;
             data.sold = parsed.sold;
             data.shows = Array.isArray(parsed.shows) ? parsed.shows : [];
@@ -5889,8 +5923,8 @@
             data.giveaways = Array.isArray(parsed.giveaways) ? parsed.giveaways : [];
             data.storeName = typeof parsed.storeName === 'string' ? parsed.storeName : data.storeName;
             data.profilePhoto = parsed.profilePhoto || data.profilePhoto;
+            data.dataVersion = parsed.dataVersion;
             await saveData();
-            applyStoreNameToUI();
             applyProfilePhotoToUI();
 
             render();
@@ -7435,6 +7469,193 @@
       document.getElementById('panel-inactive').style.display = currentTab === 'inactive' ? 'block' : 'none';
       document.getElementById('panel-totalsales').style.display = currentTab === 'totalsales' ? 'block' : 'none';
     });
+  });
+
+  // ---------- Legal (Terms of Use / Privacy Policy) ----------
+
+  const LEGAL_CONTENT = {
+    terms: {
+      title: 'Terms of Use',
+      html: `
+        <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Effective Date: September 11, 2026 &nbsp;·&nbsp; Last Updated: September 11, 2026</p>
+        <p>Welcome to VendorDex ("VendorDex," "we," "us," or "our"). These Terms of Use ("Terms") govern your access to and use of the VendorDex website, application, and related services (collectively, the "Service").</p>
+        <p>By creating an account, accessing, or using VendorDex, you agree to these Terms. If you do not agree, you should not use the Service.</p>
+
+        <p><strong>1. Description of Service</strong><br>
+        VendorDex is an inventory and business-management application designed primarily for trading card game ("TCG") collectors, vendors, and sellers.</p>
+        <p>The Service may provide features including inventory management, sales tracking, expense tracking, profit and gross-sales reporting, card submission tracking, show and event scheduling, market-price information, and related tools.</p>
+        <p>VendorDex is an organizational and informational tool. VendorDex does not provide financial, investment, tax, accounting, or legal advice.</p>
+
+        <p><strong>2. Eligibility</strong><br>
+        You must be at least 18 years old to create a VendorDex account or use the Service.</p>
+        <p>By creating an account, you represent that you are at least 18 years old and legally capable of agreeing to these Terms.</p>
+        <p>VendorDex is not intended for children under 13 and does not knowingly collect personal information from children under 13. Federal COPPA requirements can impose significant additional obligations when an online service knowingly collects personal information from children under 13.</p>
+
+        <p><strong>3. User Accounts</strong><br>
+        Certain VendorDex features require an account. You agree to provide accurate information when creating your account and to maintain the security of your login credentials.</p>
+        <p>You are responsible for activity occurring through your account. You must notify VendorDex if you believe your account has been accessed without authorization.</p>
+        <p>Authentication and account-management services may be provided through third-party service providers such as Supabase.</p>
+
+        <p><strong>4. User Data</strong><br>
+        VendorDex allows users to enter and store information including card inventory, purchase information, sales, expenses, card submissions, show information, notes, pricing information, and other records.</p>
+        <p>You retain ownership of the information you enter into VendorDex. You grant VendorDex the limited right to process, transmit, and store that information as reasonably necessary to operate and provide the Service.</p>
+        <p>VendorDex does not acquire ownership of your card inventory, sales information, or other business records merely because they are stored through the Service.</p>
+
+        <p><strong>5. Accuracy of Information</strong><br>
+        VendorDex may display market prices, estimated values, profit calculations, inventory values, reports, or information obtained from third-party sources.</p>
+        <p>Such information may be delayed, incomplete, inaccurate, or unavailable. Market prices are estimates and do not guarantee that a card can be purchased or sold for the displayed amount.</p>
+        <p>You are responsible for verifying information before making purchasing, selling, tax, financial, or business decisions.</p>
+
+        <p><strong>6. User Responsibilities</strong><br>
+        You agree not to use VendorDex to violate any applicable law; gain unauthorized access to another user's account or information; interfere with the operation or security of the Service; distribute malware or malicious code; impersonate another person; scrape or abuse the Service; or use VendorDex in connection with fraudulent transactions.</p>
+
+        <p><strong>7. Third-Party Services</strong><br>
+        VendorDex may rely upon or interact with third-party services, APIs, databases, hosting providers, authentication providers, card-price providers, or other platforms.</p>
+        <p>Those services are operated independently and may have their own terms and privacy practices.</p>
+        <p>VendorDex is not responsible for the availability, accuracy, security, or operation of third-party services outside VendorDex's reasonable control.</p>
+
+        <p><strong>8. Availability and Changes</strong><br>
+        We may modify, update, suspend, discontinue, or add features to VendorDex at any time.</p>
+        <p>We do not guarantee that the Service will always operate without interruption, data loss, errors, or downtime. Where practical, we may attempt to provide notice of significant changes.</p>
+
+        <p><strong>9. Backups and Data Loss</strong><br>
+        VendorDex may use cloud-based infrastructure to store user information.</p>
+        <p>Although reasonable measures may be taken to protect and preserve data, no electronic storage system can guarantee absolute security or availability. The FTC similarly advises app developers to use reasonable security measures and understand the responsibilities involved when relying on cloud providers.</p>
+        <p>Users are encouraged to maintain independent copies of important business or financial records.</p>
+
+        <p><strong>10. Intellectual Property</strong><br>
+        VendorDex, including its name, branding, interface, software, design, original graphics, and original content, is owned by VendorDex or its applicable licensors and is protected by applicable intellectual-property laws.</p>
+        <p>Trading card names, images, trademarks, brands, game names, grading-company names, and related intellectual property belong to their respective owners.</p>
+        <p>Use of third-party names or information does not imply endorsement or affiliation unless expressly stated.</p>
+
+        <p><strong>11. Disclaimer of Warranties</strong><br>
+        To the maximum extent permitted by applicable law, VendorDex is provided "as is" and "as available."</p>
+        <p>We do not guarantee that the Service will be uninterrupted, error-free, completely secure, or that pricing, inventory valuations, calculations, reports, or third-party information will always be accurate.</p>
+        <p>Nothing in these Terms excludes warranties or rights that cannot legally be waived.</p>
+
+        <p><strong>12. Limitation of Liability</strong><br>
+        To the maximum extent permitted by applicable law, VendorDex and its owners, operators, affiliates, and service providers will not be liable for indirect, incidental, special, consequential, or punitive damages arising from use of the Service.</p>
+        <p>This includes, where permitted by law, lost profits, lost sales, lost inventory information, lost opportunities, inaccurate market-price information, business interruption, or loss of data.</p>
+        <p>Nothing in these Terms limits liability where such limitation is prohibited by applicable law.</p>
+
+        <p><strong>13. Account Suspension or Termination</strong><br>
+        We may suspend or terminate accounts that violate these Terms, threaten the security or operation of VendorDex, engage in fraudulent or abusive activity, or violate applicable law.</p>
+        <p>Users may request account deletion as described in the Privacy Policy.</p>
+
+        <p><strong>14. Governing Law</strong><br>
+        These Terms are governed by the laws of the State of New Jersey and applicable federal laws of the United States, without regard to conflict-of-law principles.</p>
+        <p>Nothing in these Terms waives consumer rights that cannot legally be waived under applicable law.</p>
+
+        <p><strong>15. Changes to These Terms</strong><br>
+        We may update these Terms periodically. When material changes are made, the updated Terms will be posted with a revised "Last Updated" date. Continued use of VendorDex after updated Terms become effective constitutes acceptance to the extent permitted by applicable law.</p>
+
+        <p><strong>16. Contact</strong><br>
+        Questions regarding these Terms may be submitted to:<br>
+        VendorDex<br>
+        Email: SJBreakz@hotmail.com</p>
+      `
+    },
+    privacy: {
+      title: 'Privacy Policy',
+      html: `
+        <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Effective Date: September 11, 2026 &nbsp;·&nbsp; Last Updated: September 11, 2026</p>
+        <p>VendorDex respects the privacy of its users. This Privacy Policy explains what information we collect, why we collect it, how it is used and stored, and the choices available to users.</p>
+        <p>The FTC recommends that app developers clearly explain what information their apps collect, what they do with it, and when information is shared with other companies.</p>
+
+        <p><strong>1. Information We Collect</strong></p>
+        <p><em>Account Information.</em> When you create a VendorDex account, we may collect information such as your email address, account identifier, and authentication information necessary to maintain your account. Authentication may be processed by our authentication provider rather than directly by VendorDex.</p>
+        <p><em>Information You Provide.</em> VendorDex may store information you voluntarily enter into the Service, including:</p>
+        <ul style="margin:0 0 10px 20px;padding:0;">
+          <li>TCG inventory and card information</li>
+          <li>Purchase prices and acquisition information</li>
+          <li>Sales and transaction records</li>
+          <li>Expenses</li>
+          <li>Gross sales and profit information</li>
+          <li>Card grading and submission information</li>
+          <li>Upcoming and previous card shows</li>
+          <li>Notes and other information you choose to enter</li>
+        </ul>
+        <p><em>Technical Information.</em> VendorDex and its service providers may automatically process limited technical information necessary to operate and secure the Service, such as IP address, browser or device information, authentication/session information, and application logs.</p>
+
+        <p><strong>2. How We Use Information</strong><br>
+        We may use information to operate VendorDex; authenticate users; synchronize information across devices; maintain user inventory, sales, expenses, shows, and submissions; generate reports and calculations requested by users; maintain security; prevent fraud or unauthorized access; troubleshoot technical problems; provide customer support; improve the Service; and comply with applicable legal obligations.</p>
+        <p>We do not use your private inventory or sales information to conduct transactions on your behalf.</p>
+
+        <p><strong>3. Cloud Storage and Supabase</strong><br>
+        VendorDex uses Supabase infrastructure for certain backend functionality, which may include user authentication and cloud database storage.</p>
+        <p>Your VendorDex records may therefore be transmitted to and stored using Supabase infrastructure. VendorDex uses account-based access controls intended to restrict users to data associated with their own accounts.</p>
+        <p>Users should understand that no internet-based storage system can guarantee absolute security.</p>
+
+        <p><strong>4. Sale of Personal Information</strong><br>
+        VendorDex does not sell users' personal information. VendorDex does not sell users' private inventory, sales, expense, submission, or show information to data brokers or advertisers.</p>
+        <p>If these practices materially change, this Privacy Policy will be updated and any legally required notice or consent mechanisms will be provided.</p>
+
+        <p><strong>5. Advertising</strong><br>
+        VendorDex currently does not use users' personal information for targeted advertising.</p>
+        <p>If advertising or advertising-related tracking is introduced in the future, this Privacy Policy will be updated as required by applicable law.</p>
+
+        <p><strong>6. Sharing of Information</strong><br>
+        We may disclose information to service providers that process information on our behalf and are necessary to operate VendorDex.</p>
+        <p>We may also disclose information when reasonably necessary to comply with applicable law, legal process, court orders, protect the security of VendorDex, investigate fraud or abuse, or protect the rights and safety of VendorDex, its users, or others.</p>
+        <p>We do not permit service providers to use VendorDex information for unrelated purposes except as permitted by their agreements with us and applicable law.</p>
+
+        <p><strong>7. Data Security</strong><br>
+        VendorDex takes reasonable measures designed to protect personal information against unauthorized access, disclosure, alteration, or destruction.</p>
+        <p>These measures may include authentication, encrypted network connections, database access controls, and user-specific database security policies.</p>
+        <p>However, no method of electronic transmission or storage is completely secure, and we cannot guarantee absolute security. FTC guidance similarly emphasizes collecting only necessary information, securing retained information, limiting access, and securely disposing of information that is no longer needed.</p>
+
+        <p><strong>8. Data Retention</strong><br>
+        VendorDex retains user information for as long as reasonably necessary to provide the Service, maintain an active account, comply with legal obligations, resolve disputes, prevent fraud, and enforce agreements.</p>
+        <p>When an account is deleted, associated information may be deleted or anonymized, subject to legitimate legal, security, backup, or technical retention requirements.</p>
+
+        <p><strong>9. Account and Data Deletion</strong><br>
+        Users may request deletion of their VendorDex account and associated personal information by contacting: SJBreakz@hotmail.com</p>
+        <p>We may need to verify that the request originates from the account owner before completing the request. Certain information may be retained where required or permitted by law.</p>
+
+        <p><strong>10. Children's Privacy</strong><br>
+        VendorDex is intended for users 18 years of age or older.</p>
+        <p>VendorDex is not directed toward children under 13 and does not knowingly collect personal information from children under 13.</p>
+        <p>If we learn that personal information from a child under 13 has been collected without appropriate authorization, we will take reasonable steps to delete it. COPPA establishes additional requirements for online services that collect personal information from children under 13.</p>
+
+        <p><strong>11. Third-Party Services</strong><br>
+        VendorDex may use third-party service providers for functionality such as authentication, cloud database storage, hosting, APIs, analytics, or card information.</p>
+        <p>Those providers may process information according to their own privacy policies and contractual obligations. Users should review applicable third-party privacy policies where appropriate.</p>
+
+        <p><strong>12. U.S. and New Jersey Users</strong><br>
+        VendorDex is operated in the United States and is intended primarily for users in the United States.</p>
+        <p>We endeavor to handle personal information consistently with applicable U.S. federal and state privacy and consumer-protection requirements.</p>
+        <p>New Jersey provides privacy and consumer-protection requirements that may apply depending on the nature and scale of an organization's data-processing activities. New Jersey's own privacy guidance also emphasizes disclosure of what information is collected, how it is used, and how it is protected.</p>
+        <p>Nothing in this Privacy Policy limits rights that a consumer may have under applicable law.</p>
+
+        <p><strong>13. Changes to This Privacy Policy</strong><br>
+        We may update this Privacy Policy as VendorDex develops, our data practices change, or applicable laws and regulations change.</p>
+        <p>The "Last Updated" date will identify the latest version. If a change materially affects how personal information is collected or used, we will provide additional notice where required by applicable law.</p>
+
+        <p><strong>14. Contact Us</strong><br>
+        Questions, privacy inquiries, and deletion requests may be submitted to:<br>
+        VendorDex<br>
+        Email: SJBreakz@hotmail.com</p>
+      `
+    }
+  };
+
+  function openLegalModal(kind){
+    const content = LEGAL_CONTENT[kind];
+    if (!content) return;
+    document.getElementById('legal-modal-title').textContent = content.title;
+    document.getElementById('legal-modal-body').innerHTML = content.html;
+    document.getElementById('legal-modal-overlay').style.display = 'flex';
+  }
+
+  function closeLegalModal(){
+    document.getElementById('legal-modal-overlay').style.display = 'none';
+  }
+
+  document.getElementById('auth-terms-link').addEventListener('click', () => openLegalModal('terms'));
+  document.getElementById('auth-privacy-link').addEventListener('click', () => openLegalModal('privacy'));
+  document.getElementById('legal-modal-close').addEventListener('click', closeLegalModal);
+  document.getElementById('legal-modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'legal-modal-overlay') closeLegalModal();
   });
 
   // ---------- Auth (Supabase email/password) ----------
