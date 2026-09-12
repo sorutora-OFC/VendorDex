@@ -653,6 +653,89 @@
     line-height: 1.5;
     margin: 14px 0 18px;
   }
+  /* ---------- TCG sub-tabs (Explore Sets) ---------- */
+  .tcg-tabs{
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px 2px 8px;
+    margin: 4px 0 4px;
+    scrollbar-width: none;
+  }
+  .tcg-tabs::-webkit-scrollbar{ display: none; }
+  .tcg-tab{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 15px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--sleeve);
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .tcg-tab svg{ width: 16px; height: 16px; flex-shrink: 0; }
+  .tcg-tab:hover{ border-color: var(--holo); color: var(--text); }
+  .tcg-tab.active{
+    background: linear-gradient(135deg, var(--gold), var(--holo));
+    border-color: transparent;
+    color: var(--ink);
+  }
+  .tcg-panel{ margin-top: 12px; }
+  .tcg-coming-soon{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    padding: 56px 20px;
+    border: 1px dashed var(--line);
+    border-radius: 16px;
+    margin-top: 8px;
+  }
+  .tcg-coming-soon-icon{
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sleeve);
+    border: 1px solid var(--line);
+    color: var(--holo);
+  }
+  .tcg-coming-soon-icon svg{ width: 28px; height: 28px; }
+  .tcg-coming-soon-title{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--text);
+  }
+  .tcg-coming-soon-badge{
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--holo);
+    background: rgba(167,139,250,0.1);
+    border: 1px solid rgba(167,139,250,0.3);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .tcg-coming-soon-desc{
+    font-family: 'Open Sans', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 320px;
+    line-height: 1.5;
+  }
   .explore-sets-list{
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -3611,17 +3694,52 @@
   <div id="screen-search" style="display:none;">
     <div class="dash-welcome">Explore Sets</div>
 
-    <div id="explore-sets-list" class="explore-sets-list"></div>
+    <div class="tcg-tabs" id="tcg-tabs">
+      <button type="button" class="tcg-tab active" data-tcg="pokemon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h6M15 12h6"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
+        <span>Pokémon</span>
+      </button>
+      <button type="button" class="tcg-tab" data-tcg="onepiece">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>
+        <span>One Piece</span>
+      </button>
+      <button type="button" class="tcg-tab" data-tcg="dragonball">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m12 8 1.1 2.6 2.8.3-2.1 1.9.6 2.8L12 14.1l-2.4 1.5.6-2.8-2.1-1.9 2.8-.3Z"/></svg>
+        <span>Dragon Ball</span>
+      </button>
+      <button type="button" class="tcg-tab" data-tcg="naruto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 12c3 0 3-3 0-3s-5 2.5-5 5.5 3 6.5 7 6.5 7.5-3.5 7.5-7.5-3.5-8.5-8-8.5-9 3.5-9 8"/></svg>
+        <span>Naruto</span>
+      </button>
+      <button type="button" class="tcg-tab" data-tcg="lorcana">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 18 6"/><path d="m14 4 6 6-3 3-6-6Z"/><path d="M4 20l3-1 1-3"/></svg>
+        <span>Lorcana</span>
+      </button>
+      <button type="button" class="tcg-tab" data-tcg="riftbound">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 21 7v10l-9 5-9-5V7Z"/><path d="m9 8 2 4-2 4M15 8l-2 4 2 4"/></svg>
+        <span>Riftbound</span>
+      </button>
+    </div>
 
-    <div id="explore-cards-view" style="display:none;">
-      <button type="button" id="explore-back-btn" class="explore-back-btn">&larr; Back to Sets</button>
-      <div class="dash-welcome" id="explore-set-title" style="margin-top:10px;"></div>
-      <div class="grid" id="explore-cards-grid"></div>
-      <div class="empty" id="explore-cards-empty" style="display:none;">
-        <strong>No cards found</strong>
-        This set may not be fully indexed yet.
+    <div id="tcg-panel-pokemon" class="tcg-panel">
+      <div id="explore-sets-list" class="explore-sets-list"></div>
+
+      <div id="explore-cards-view" style="display:none;">
+        <button type="button" id="explore-back-btn" class="explore-back-btn">&larr; Back to Sets</button>
+        <div class="dash-welcome" id="explore-set-title" style="margin-top:10px;"></div>
+        <div class="grid" id="explore-cards-grid"></div>
+        <div class="empty" id="explore-cards-empty" style="display:none;">
+          <strong>No cards found</strong>
+          This set may not be fully indexed yet.
+        </div>
       </div>
     </div>
+
+    <div id="tcg-panel-onepiece" class="tcg-panel" style="display:none;"></div>
+    <div id="tcg-panel-dragonball" class="tcg-panel" style="display:none;"></div>
+    <div id="tcg-panel-naruto" class="tcg-panel" style="display:none;"></div>
+    <div id="tcg-panel-lorcana" class="tcg-panel" style="display:none;"></div>
+    <div id="tcg-panel-riftbound" class="tcg-panel" style="display:none;"></div>
   </div>
 
   </div>
@@ -7056,6 +7174,60 @@
       exploreSetsLoaded = true;
       renderExploreSetsList();
     }
+  });
+
+  // ---------- TCG sub-tabs (Explore Sets) ----------
+  // Only Pokémon has a live card database wired up right now. The rest
+  // render a simple "coming soon" placeholder until those APIs are added.
+  const TCG_KEYS = ['pokemon', 'onepiece', 'dragonball', 'naruto', 'lorcana', 'riftbound'];
+
+  const TCG_COMING_SOON = {
+    onepiece: {
+      name: 'One Piece',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>'
+    },
+    dragonball: {
+      name: 'Dragon Ball',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m12 8 1.1 2.6 2.8.3-2.1 1.9.6 2.8L12 14.1l-2.4 1.5.6-2.8-2.1-1.9 2.8-.3Z"/></svg>'
+    },
+    naruto: {
+      name: 'Naruto',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 12c3 0 3-3 0-3s-5 2.5-5 5.5 3 6.5 7 6.5 7.5-3.5 7.5-7.5-3.5-8.5-8-8.5-9 3.5-9 8"/></svg>'
+    },
+    lorcana: {
+      name: 'Lorcana',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 18 6"/><path d="m14 4 6 6-3 3-6-6Z"/><path d="M4 20l3-1 1-3"/></svg>'
+    },
+    riftbound: {
+      name: 'Riftbound',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 21 7v10l-9 5-9-5V7Z"/><path d="m9 8 2 4-2 4M15 8l-2 4 2 4"/></svg>'
+    }
+  };
+
+  Object.keys(TCG_COMING_SOON).forEach(key => {
+    const info = TCG_COMING_SOON[key];
+    document.getElementById('tcg-panel-' + key).innerHTML = `
+      <div class="tcg-coming-soon">
+        <div class="tcg-coming-soon-icon">${info.icon}</div>
+        <div class="tcg-coming-soon-title">${info.name}</div>
+        <span class="tcg-coming-soon-badge">Coming Soon</span>
+        <div class="tcg-coming-soon-desc">${info.name} set browsing is on the way — we're working on adding this card database next.</div>
+      </div>
+    `;
+  });
+
+  document.querySelectorAll('.tcg-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const key = tab.dataset.tcg;
+      document.querySelectorAll('.tcg-tab').forEach(t => t.classList.toggle('active', t === tab));
+      TCG_KEYS.forEach(k => {
+        document.getElementById('tcg-panel-' + k).style.display = (k === key) ? 'block' : 'none';
+      });
+      if (key === 'pokemon' && !exploreSetsLoaded){
+        exploreSetsLoaded = true;
+        renderExploreSetsList();
+      }
+    });
   });
 
   function loadSetList(){
