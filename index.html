@@ -2463,6 +2463,30 @@
     }
   }
 
+  /* Active inventory grid — same idea as the Explore cards-in-a-set grid
+     above: the modern tile (photo + number badge + name + pill actions)
+     is compact enough to show 2 per row on phones instead of 1-per-row. */
+  @media (max-width: 640px){
+    #active-grid.grid{
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+    }
+    #active-grid .active-tile-body{
+      padding: 10px;
+      gap: 8px;
+    }
+    #active-grid .btn-sm{
+      font-size: 10px;
+      padding: 7px 0;
+    }
+  }
+  @media (max-width: 380px){
+    #active-grid.grid{
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+  }
+
   .card-tile{
     position: relative;
     background: var(--sleeve);
