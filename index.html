@@ -836,7 +836,11 @@
     border: 1px solid var(--line);
     border-radius: 8px;
     padding: 8px 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s ease;
   }
+  .search-result-row:hover{ border-color: var(--gold); }
   .search-result-row img{
     width: 34px;
     height: 46px;
@@ -4906,8 +4910,8 @@
       return;
     }
 
-    container.innerHTML = `<div class="search-results-list">${results.map(c => `
-      <div class="search-result-row">
+    container.innerHTML = `<div class="search-results-list">${results.map((c, i) => `
+      <button type="button" class="search-result-row" data-index="${i}" style="width:100%; cursor:pointer; border:1px solid var(--line); background:var(--ink);">
         ${c.photo ? `<img src="${c.photo}" alt="${escapeHtml(c.name)}">` : '<div class="list-thumb-empty"></div>'}
         <div class="search-result-info">
           <div class="name">${escapeHtml(c.name)}</div>
@@ -4915,8 +4919,19 @@
         </div>
         <span class="status-badge status-${c.status}">${c.status === 'active' ? 'Active' : 'Sold'}</span>
         ${c.qty > 1 ? `<span class="qty-badge">&times;${c.qty}</span>` : ''}
-      </div>
+      </button>
     `).join('')}</div>`;
+
+    container.querySelectorAll('.search-result-row').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index, 10);
+        const record = results[idx] && results[idx].sampleRecord;
+        if (record){
+          closeSearchModal();
+          showCardDetailModal(record, { showAging: true });
+        }
+      });
+    });
   }
 
   document.getElementById('allinventory-search-btn').addEventListener('click', openSearchModal);
