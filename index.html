@@ -18,7 +18,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Open+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/6.0.0/tesseract.min.js"></script>
 <style>
   :root{
     --ink: #121214;
@@ -3765,7 +3765,7 @@
             <span class="add-menu-title">Search Cards</span>
           </button>
         </div>
-        <input type="file" id="scan-file-input" accept="image/*" style="display:none;">
+        <input type="file" id="scan-file-input" accept="image/*" capture="environment" style="display:none;">
       </div>
     </div>
   </div>
@@ -6557,7 +6557,7 @@
       return;
     }
     document.getElementById('search-cards-results').innerHTML = '<div class="search-empty-msg">Searching…</div>';
-    _cardSearchTimer = setTimeout(() => runCardSearch(query), 400);
+    _cardSearchTimer = setTimeout(() => runCardSearch(query), 300);
   });
 
   // ---------- Multi-source card lookup (name search) ----------
@@ -6567,18 +6567,18 @@
   // so the rest of the app (extractMarketPrice, showScanConfirm, etc.)
   // doesn't need to know which source a card came from.
 
-  async function searchPokemonTcgApiByName(query){
+  async function searchPokemonTcgApiByName(query, signal){
     const cleanQuery = query.replace(/"/g, '');
     const url = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(`name:"${cleanQuery}*"`)}&pageSize=20&orderBy=name`;
-    const res = await fetch(url, { headers: { 'X-Api-Key': apiKeys.pokemontcg } });
+    const res = await fetch(url, { headers: { 'X-Api-Key': apiKeys.pokemontcg }, signal });
     if (!res.ok) throw new Error('pokemontcg.io request failed: ' + res.status);
     const json = await res.json();
     return (json.data || []).map(card => ({ card, source: 'Pokémon TCG API' }));
   }
 
-  async function searchTcgApiDevByName(query){
+  async function searchTcgApiDevByName(query, signal){
     const url = `https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&sort=relevance&per_page=20`;
-    const res = await fetch(url, { headers: { 'X-API-Key': apiKeys.tcgapidev } });
+    const res = await fetch(url, { headers: { 'X-API-Key': apiKeys.tcgapidev }, signal });
     if (!res.ok) throw new Error('TCG API request failed: ' + res.status);
     const json = await res.json();
     const results = json.data || [];
@@ -6609,9 +6609,9 @@
     });
   }
 
-  async function searchPokeWalletByName(query){
+  async function searchPokeWalletByName(query, signal){
     const url = `https://api.pokewallet.io/search?q=${encodeURIComponent(query)}&limit=20`;
-    const res = await fetch(url, { headers: { 'X-API-Key': apiKeys.pokewallet } });
+    const res = await fetch(url, { headers: { 'X-API-Key': apiKeys.pokewallet }, signal });
     if (!res.ok) throw new Error('PokéWallet request failed: ' + res.status);
     const json = await res.json();
     const results = (json.results || []).filter(r => r.tcgplayer && Array.isArray(r.tcgplayer.prices) && r.tcgplayer.prices.length);
@@ -6632,7 +6632,7 @@
     });
   }
 
-  async function multiSourceCardSearch(query){
+  async function multiSourceCardSearch(query, signal){
     // tcgapi.dev is intentionally NOT in this list. Its server sends
     // Access-Control-Allow-Origin: https://tcgapi.dev on every response —
     // hardcoded to its own site, not reflecting the caller's origin or
@@ -6646,9 +6646,10 @@
     let lastError = null;
     for (const provider of providers){
       try{
-        const results = await provider(query);
+        const results = await provider(query, signal);
         if (results.length) return { entries: results, error: null };
       } catch(err){
+        if (err && err.name === 'AbortError') throw err;
         console.warn('Card source failed, trying next', err);
         lastError = err;
       }
@@ -6673,43 +6674,78 @@
     return card;
   }
 
+  // A short-lived cache of recent exact searches, plus cancellation of
+  // whatever request is still in flight when a newer one starts. Together
+  // these mean: retyping something you already searched shows up instantly,
+  // and a slow response for an old keystroke can never overwrite a newer,
+  // faster one on screen.
+  const _cardSearchCache = new Map(); // lowercased query -> { entries, error, ts }
+  const CARD_SEARCH_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
+  const CARD_SEARCH_CACHE_MAX_ENTRIES = 30;
+  let _cardSearchAbortController = null;
+
+  function renderCardSearchResults(entries, error, container){
+    if (entries.length === 0){
+      if (error){
+        const detail = (error && error.message) ? error.message : 'unknown error';
+        container.innerHTML = `<div class="search-empty-msg">Search failed on all sources. Details: ${escapeHtml(detail)}.</div>`;
+      } else {
+        container.innerHTML = '<div class="search-empty-msg">No cards found. Try a different spelling.</div>';
+      }
+      return;
+    }
+
+    container.innerHTML = `<div class="search-results-list">${entries.map((entry, i) => { const card = entry.card; return `
+      <button type="button" class="search-result-row card-search-result" data-index="${i}" style="width:100%; cursor:pointer; border:1px solid var(--line); background:var(--ink);">
+        ${(card.images && (card.images.small || card.images.large)) ? `<img src="${card.images.small || card.images.large}" alt="${escapeHtml(card.name)}" loading="lazy" decoding="async">` : '<div class="list-thumb-empty"></div>'}
+        <div class="search-result-info">
+          <div class="name">${escapeHtml(card.name)}</div>
+          <div class="meta">${escapeHtml(card.set ? card.set.name : '')} &middot; #${escapeHtml(card.number || '')} &middot; ${escapeHtml(entry.source)}</div>
+        </div>
+      </button>
+    `; }).join('')}</div>`;
+
+    container.querySelectorAll('.card-search-result').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const idx = parseInt(btn.dataset.index, 10);
+        const entry = entries[idx];
+        closeSearchCardsModal();
+        openScanModal();
+        showScanStatus('Loading card…', 'Fetching card details.', { spinner: true });
+        const card = await resolveCardImage(entry);
+        showScanConfirm(card);
+      });
+    });
+  }
+
   async function runCardSearch(query){
     const container = document.getElementById('search-cards-results');
-    try{
-      const { entries, error } = await multiSourceCardSearch(query);
+    const cacheKey = query.toLowerCase();
 
-      if (entries.length === 0){
-        if (error){
-          const detail = (error && error.message) ? error.message : 'unknown error';
-          container.innerHTML = `<div class="search-empty-msg">Search failed on all sources. Details: ${escapeHtml(detail)}.</div>`;
-        } else {
-          container.innerHTML = '<div class="search-empty-msg">No cards found. Try a different spelling.</div>';
-        }
-        return;
+    const cached = _cardSearchCache.get(cacheKey);
+    if (cached && (Date.now() - cached.ts) < CARD_SEARCH_CACHE_MAX_AGE_MS){
+      renderCardSearchResults(cached.entries, cached.error, container);
+      return;
+    }
+
+    // Only the latest keystroke's request matters — cancel anything still
+    // waiting on a response so a slow, stale request can't land after a
+    // newer, faster one and flicker the results back to something old.
+    if (_cardSearchAbortController) _cardSearchAbortController.abort();
+    _cardSearchAbortController = new AbortController();
+    const { signal } = _cardSearchAbortController;
+
+    try{
+      const { entries, error } = await multiSourceCardSearch(query, signal);
+
+      _cardSearchCache.set(cacheKey, { entries, error, ts: Date.now() });
+      if (_cardSearchCache.size > CARD_SEARCH_CACHE_MAX_ENTRIES){
+        _cardSearchCache.delete(_cardSearchCache.keys().next().value);
       }
 
-      container.innerHTML = `<div class="search-results-list">${entries.map((entry, i) => { const card = entry.card; return `
-        <button type="button" class="search-result-row card-search-result" data-index="${i}" style="width:100%; cursor:pointer; border:1px solid var(--line); background:var(--ink);">
-          ${(card.images && (card.images.small || card.images.large)) ? `<img src="${card.images.small || card.images.large}" alt="${escapeHtml(card.name)}">` : '<div class="list-thumb-empty"></div>'}
-          <div class="search-result-info">
-            <div class="name">${escapeHtml(card.name)}</div>
-            <div class="meta">${escapeHtml(card.set ? card.set.name : '')} &middot; #${escapeHtml(card.number || '')} &middot; ${escapeHtml(entry.source)}</div>
-          </div>
-        </button>
-      `; }).join('')}</div>`;
-
-      container.querySelectorAll('.card-search-result').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const idx = parseInt(btn.dataset.index, 10);
-          const entry = entries[idx];
-          closeSearchCardsModal();
-          openScanModal();
-          showScanStatus('Loading card…', 'Fetching card details.', { spinner: true });
-          const card = await resolveCardImage(entry);
-          showScanConfirm(card);
-        });
-      });
+      renderCardSearchResults(entries, error, container);
     } catch(err){
+      if (err && err.name === 'AbortError') return; // superseded by a newer search
       console.error('Card search failed', err);
       const detail = describeError(err);
       container.innerHTML = `<div class="search-empty-msg">Search failed. Details: ${escapeHtml(detail)}.</div>`;
@@ -7035,6 +7071,9 @@
   // ---------- Explore Sets (Search tab) ----------
 
   let cachedExploreSets = null;
+  let exploreSetCardsCache = {}; // setId -> cards array, in-memory for this session
+  const EXPLORE_SETS_CACHE_KEY = 'tcg-explore-sets-cache';
+  const EXPLORE_SETS_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
   // Retries a failing async operation automatically, with increasing delay
   // between attempts, up to maxAttempts. Calls onRetry before each wait so
@@ -7055,12 +7094,7 @@
     }
   }
 
-  async function fetchExploreSets(){
-    if (cachedExploreSets) return cachedExploreSets;
-    // Note: no `orderBy` param here — the official docs only list q/page/pageSize
-    // as valid params for /v2/sets (unlike /v2/cards, which does support
-    // orderBy). Sending an unsupported orderBy value was causing the API's
-    // server to return a 500. We sort client-side instead, after fetching.
+  async function fetchAndCacheExploreSets(){
     const url = 'https://api.pokemontcg.io/v2/sets?pageSize=250';
     const res = await fetch(url, { headers: { 'X-Api-Key': apiKeys.pokemontcg } });
     if (!res.ok) throw new Error('Set list request failed: ' + res.status);
@@ -7068,8 +7102,42 @@
     const sets = json.data || [];
     sets.sort((a, b) => (b.releaseDate || '').localeCompare(a.releaseDate || ''));
     cachedExploreSets = sets;
+    try{
+      await storageApi.set(EXPLORE_SETS_CACHE_KEY, JSON.stringify({ sets, fetchedAt: Date.now() }), false);
+    } catch(e){
+      // Non-fatal — the in-memory cache for this session still works even
+      // if it can't be persisted for next time.
+    }
     return cachedExploreSets;
   }
+
+  async function fetchExploreSets(){
+    if (cachedExploreSets) return cachedExploreSets;
+
+    // Serve the set list (with logos) instantly from a persisted cache
+    // when we have a fresh one, instead of making the person wait on a
+    // network round trip every time they open Explore Sets.
+    try{
+      const cached = await storageApi.get(EXPLORE_SETS_CACHE_KEY, false);
+      if (cached && cached.value){
+        const parsed = JSON.parse(cached.value);
+        if (parsed.fetchedAt && Array.isArray(parsed.sets) && parsed.sets.length){
+          cachedExploreSets = parsed.sets;
+          if ((Date.now() - parsed.fetchedAt) >= EXPLORE_SETS_CACHE_MAX_AGE_MS){
+            // Stale — still show it immediately, but quietly refresh in
+            // the background so next time it's current again.
+            fetchAndCacheExploreSets().catch(() => {});
+          }
+          return cachedExploreSets;
+        }
+      }
+    } catch(e){
+      // No cache yet, or storage unavailable — fall through to a live fetch.
+    }
+
+    return await fetchAndCacheExploreSets();
+  }
+
 
   async function renderExploreSetsList(){
     const listEl = document.getElementById('explore-sets-list');
@@ -7088,7 +7156,7 @@
         <button type="button" class="explore-set-item" data-set-id="${escapeHtml(s.id)}" data-set-name="${escapeHtml(s.name)}">
           <div class="explore-set-logo-wrap">
             ${s.images && s.images.logo
-              ? `<img class="explore-set-logo" src="${s.images.logo}" alt="${escapeHtml(s.name)}">`
+              ? `<img class="explore-set-logo" src="${s.images.logo}" alt="${escapeHtml(s.name)}" loading="lazy" decoding="async">`
               : '<div class="explore-set-logo-empty"></div>'}
           </div>
           <div class="explore-set-name">${escapeHtml(s.name)}</div>
@@ -7109,6 +7177,34 @@
     }
   }
 
+  function renderExploreCardsGrid(cards, grid, empty){
+    if (cards.length === 0){
+      grid.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+
+    grid.style.display = 'grid';
+    empty.style.display = 'none';
+    grid.innerHTML = cards.map((c, i) => `
+      <button type="button" class="explore-card-tile" data-index="${i}">
+        ${c.images && (c.images.small || c.images.large)
+          ? `<img class="explore-card-photo" src="${c.images.small || c.images.large}" alt="${escapeHtml(c.name)}" loading="lazy" decoding="async">`
+          : '<div class="explore-card-photo"></div>'}
+        <div class="explore-card-name">${escapeHtml(c.name)}</div>
+        <div class="explore-card-number">#${escapeHtml(c.number || '?')}</div>
+      </button>
+    `).join('');
+
+    grid.querySelectorAll('.explore-card-tile').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index, 10);
+        openScanModal();
+        showScanConfirm(cards[idx]);
+      });
+    });
+  }
+
   async function openExploreSet(setId, setName){
     document.getElementById('explore-sets-list').style.display = 'none';
     document.getElementById('explore-cards-view').style.display = 'block';
@@ -7116,8 +7212,15 @@
 
     const grid = document.getElementById('explore-cards-grid');
     const empty = document.getElementById('explore-cards-empty');
-    grid.style.display = 'grid';
     empty.style.display = 'none';
+
+    // Already loaded this set this session — show it instantly, no refetch.
+    if (exploreSetCardsCache[setId]){
+      renderExploreCardsGrid(exploreSetCardsCache[setId], grid, empty);
+      return;
+    }
+
+    grid.style.display = 'grid';
     grid.innerHTML = '<div class="explore-loading">Loading cards…</div>';
 
     try{
@@ -7134,29 +7237,8 @@
         }
       );
 
-      if (cards.length === 0){
-        grid.style.display = 'none';
-        empty.style.display = 'block';
-        return;
-      }
-
-      grid.innerHTML = cards.map((c, i) => `
-        <button type="button" class="explore-card-tile" data-index="${i}">
-          ${c.images && (c.images.small || c.images.large)
-            ? `<img class="explore-card-photo" src="${c.images.small || c.images.large}" alt="${escapeHtml(c.name)}">`
-            : '<div class="explore-card-photo"></div>'}
-          <div class="explore-card-name">${escapeHtml(c.name)}</div>
-          <div class="explore-card-number">#${escapeHtml(c.number || '?')}</div>
-        </button>
-      `).join('');
-
-      grid.querySelectorAll('.explore-card-tile').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const idx = parseInt(btn.dataset.index, 10);
-          openScanModal();
-          showScanConfirm(cards[idx]);
-        });
-      });
+      exploreSetCardsCache[setId] = cards;
+      renderExploreCardsGrid(cards, grid, empty);
     } catch(err){
       console.error('Could not load set cards', err);
       grid.innerHTML = `<div class="explore-loading">Could not load cards. Details: ${escapeHtml(describeError(err))}.</div>`;
@@ -7432,11 +7514,23 @@
     return 'unknown error';
   }
 
+  // Guards any promise with a hard time limit — used below so a genuinely
+  // stuck OCR worker (creation hangs, or recognize() never resolves) still
+  // surfaces an error the person can act on, instead of leaving them on an
+  // endless "Reading card…" spinner with no way forward but closing the app.
+  function withTimeout(promise, ms, message){
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  }
+
   async function ocrText(imageSrc, whitelist){
     try{
-      const worker = await getOcrWorker();
+      const worker = await withTimeout(getOcrWorker(), 20000, 'OCR engine took too long to start.');
       await worker.setParameters({ tessedit_char_whitelist: whitelist || '' });
-      const { data: { text } } = await worker.recognize(imageSrc);
+      const { data: { text } } = await withTimeout(worker.recognize(imageSrc), 20000, 'OCR took too long to read this photo.');
       return text;
     } catch(err){
       // createWorker() can resolve "successfully" while returning a worker
