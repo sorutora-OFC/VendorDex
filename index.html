@@ -1760,6 +1760,38 @@
     color: var(--muted);
     margin-top: 3px;
   }
+  .price-stats-strip{
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 12px 10px;
+    margin-bottom: 16px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--sleeve);
+  }
+  .price-stat{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .price-stat-label{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .price-stat-value{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--text);
+  }
+  .price-stat-value.positive{ color: var(--profit); }
+  .price-stat-value.negative{ color: var(--loss); }
   .scan-confirm-grid{
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -3786,7 +3818,29 @@
       </div>
     </div>
 
-    <div id="tcg-panel-onepiece" class="tcg-panel" style="display:none;"></div>
+    <div id="tcg-panel-onepiece" class="tcg-panel" style="display:none;">
+      <div id="onepiece-setup-note" class="tcg-coming-soon" style="display:none;">
+        <div class="tcg-coming-soon-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>
+        </div>
+        <div class="tcg-coming-soon-title">One Piece</div>
+        <span class="tcg-coming-soon-badge">Setup Needed</span>
+        <div class="tcg-coming-soon-desc">Add your tcgapi.dev API key and CORS proxy URL in Settings &rarr; API Keys &rarr; One Piece to browse sets and cards here.</div>
+      </div>
+
+      <div id="onepiece-sets-list" class="explore-sets-list"></div>
+
+      <div id="onepiece-cards-view" style="display:none;">
+        <button type="button" id="onepiece-back-btn" class="explore-back-btn">&larr; Back to Sets</button>
+        <div class="dash-welcome" id="onepiece-set-title" style="margin-top:10px;"></div>
+        <div class="grid" id="onepiece-cards-grid"></div>
+        <div class="empty" id="onepiece-cards-empty" style="display:none;">
+          <strong>No cards found</strong>
+          This set may not be fully indexed yet.
+        </div>
+      </div>
+    </div>
+
     <div id="tcg-panel-dragonball" class="tcg-panel" style="display:none;"></div>
     <div id="tcg-panel-naruto" class="tcg-panel" style="display:none;"></div>
     <div id="tcg-panel-lorcana" class="tcg-panel" style="display:none;"></div>
@@ -6526,13 +6580,13 @@
     },
     onepiece: {
       name: 'One Piece',
-      status: 'Coming Soon',
+      status: 'Live',
       icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>',
-      intro: 'One Piece card data isn\u2019t connected yet — save keys now and they\u2019ll be ready the moment it is.',
+      intro: 'Powered by tcgapi.dev through a small CORS proxy you deploy yourself (a free Cloudflare Worker) — ask in chat for the ready-to-deploy script and setup steps.',
       fields: [
-        { id: 'onepiece-1', label: 'API Key 1', storageKey: 'tcg-apikey-onepiece-1', default: '', note: '' },
-        { id: 'onepiece-2', label: 'API Key 2', storageKey: 'tcg-apikey-onepiece-2', default: '', note: '' },
-        { id: 'onepiece-3', label: 'API Key 3', storageKey: 'tcg-apikey-onepiece-3', default: '', note: '' }
+        { id: 'onepiece-apikey', label: 'TCGApi.dev API Key', storageKey: 'tcg-apikey-onepiece-apikey', default: 'tcg_live_74d6498285db81bf48765dd573b113a25deadbcb', note: 'Get a free key at tcgapi.dev/dashboard.' },
+        { id: 'onepiece-proxy', label: 'CORS Proxy URL', storageKey: 'tcg-apikey-onepiece-proxy', default: 'https://tcgapi-proxi.sorutora.workers.dev', note: 'Your deployed Cloudflare Worker URL — required because tcgapi.dev blocks direct browser calls from any other site.' },
+        { id: 'onepiece-rapidapi', label: 'RapidAPI Key (fallback)', storageKey: 'tcg-apikey-onepiece-rapidapi', default: 'e3d2909b78msh4fc86a1640aad78p14fcd8jsn230c51635339', note: 'Backup source for price history — used only when the primary tcgapi.dev/proxy lookup above can\u2019t return full card data. Host is fixed to one-piece-tcg-prices.p.rapidapi.com.' }
       ]
     },
     dragonball: {
@@ -7477,16 +7531,318 @@
     }
   });
 
+  // ---------- One Piece (via tcgapi.dev, through a CORS proxy) ----------
+  // tcgapi.dev sends Access-Control-Allow-Origin: https://tcgapi.dev on
+  // every response, which blocks direct browser calls from this app no
+  // matter how valid the API key is — that's a browser-enforced rule, not
+  // something a key can bypass. The fix is a small server-side relay (a
+  // Cloudflare Worker) that calls tcgapi.dev on the backend, where CORS
+  // doesn't apply, and adds a permissive CORS header on the way back.
+  // See Settings > API Keys > One Piece for where the key + proxy URL are
+  // entered, and the tcgapi-proxy-worker.js file for the Worker itself.
+
+  let cachedOnePieceSets = null;
+  let onePieceSetCardsCache = {};
+  let onePieceSetsLoaded = false;
+
+  function getOnePieceCredentials(){
+    return {
+      apiKey: (apiKeys['onepiece-apikey'] || '').trim(),
+      proxyUrl: (apiKeys['onepiece-proxy'] || '').trim().replace(/\/+$/, '')
+    };
+  }
+
+  async function onePieceProxyFetch(path){
+    const { apiKey, proxyUrl } = getOnePieceCredentials();
+    if (!apiKey || !proxyUrl) throw new Error('MISSING_CREDENTIALS');
+    const res = await fetch(proxyUrl + path, { headers: { 'X-API-Key': apiKey } });
+    if (!res.ok) throw new Error('One Piece proxy request failed: ' + res.status);
+    return res.json();
+  }
+
+  // Normalizes a tcgapi.dev One Piece card into the same pokemontcg.io-
+  // shaped pseudo-card object the rest of the app already expects (see the
+  // multi-source card lookup note above showScanConfirm) — so
+  // extractMarketPrice, showScanConfirm, and renderExploreCardsGrid all
+  // work completely unchanged. tcgapi.dev's exact field names for low
+  // price / % change aren't confirmed from their public docs, so this
+  // checks a few plausible variants and simply omits a stat rather than
+  // ever showing a guessed or wrong number.
+  function normalizeOnePieceCard(raw){
+    const pick = (...keys) => {
+      for (const k of keys){
+        if (raw[k] !== undefined && raw[k] !== null) return raw[k];
+      }
+      return null;
+    };
+    const market = pick('market_price', 'marketPrice', 'price');
+    const low = pick('low_price', 'lowPrice', 'low');
+    const change7d = pick('change_7d', 'percent_change_7d', 'change7d', 'pct_change_7d');
+    const change30d = pick('change_30d', 'percent_change_30d', 'change30d', 'pct_change_30d');
+    const image = pick('image_url', 'imageUrl', 'image');
+
+    return {
+      id: raw.id,
+      name: raw.name || '',
+      number: raw.number || raw.card_number || '',
+      rarity: raw.rarity || '',
+      images: { small: image || '', large: image || '' },
+      set: { name: raw.set_name || raw.setName || '', printedTotal: raw.set_total || null },
+      tcgplayer: { prices: { normal: { market: typeof market === 'number' ? market : null } } },
+      _lowPrice: typeof low === 'number' ? low : null,
+      _change7d: typeof change7d === 'number' ? change7d : null,
+      _change30d: typeof change30d === 'number' ? change30d : null
+    };
+  }
+
+  // Backup source: RapidAPI's one-piece-tcg-prices, used only when the
+  // primary tcgapi.dev/proxy lookup can't provide a photo, detail, or
+  // price trend for a card. Two confirmed endpoints:
+  //   GET /cards/{id}                — full card record, including an
+  //                                    `image` field and other details
+  //   GET /cards/{id}/history-prices — price history, used for 7d/30d %
+  const ONEPIECE_RAPIDAPI_HOST = 'one-piece-tcg-prices.p.rapidapi.com';
+
+  async function rapidApiOnePieceFetch(path){
+    const key = (apiKeys['onepiece-rapidapi'] || '').trim();
+    if (!key) throw new Error('No RapidAPI key configured for One Piece.');
+    const res = await fetch(`https://${ONEPIECE_RAPIDAPI_HOST}${path}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-rapidapi-host': ONEPIECE_RAPIDAPI_HOST,
+        'x-rapidapi-key': key
+      }
+    });
+    if (!res.ok) throw new Error('RapidAPI request failed: ' + res.status);
+    return res.json();
+  }
+
+  function fetchOnePieceRapidApiCard(cardId){
+    return rapidApiOnePieceFetch(`/cards/${encodeURIComponent(cardId)}`);
+  }
+
+  function fetchOnePieceRapidApiHistory(cardId){
+    return rapidApiOnePieceFetch(`/cards/${encodeURIComponent(cardId)}/history-prices`);
+  }
+
+  // Computes simple % change between the most recent price point and the
+  // closest point roughly `daysBack` days earlier in a price-history
+  // array. Defensive about the exact response shape (field names weren't
+  // confirmed from docs) — returns null rather than guessing if the shape
+  // doesn't match what's expected.
+  function computeChangeFromHistory(historyPoints, daysBack){
+    if (!Array.isArray(historyPoints) || historyPoints.length < 2) return null;
+    const pick = (pt, ...keys) => {
+      for (const k of keys) if (pt[k] !== undefined && pt[k] !== null) return pt[k];
+      return null;
+    };
+    const getDate = pt => new Date(pick(pt, 'date', 'timestamp', 'recorded_at') || 0).getTime();
+    const getPrice = pt => pick(pt, 'market_price', 'price', 'market');
+    const sorted = [...historyPoints].sort((a, b) => getDate(a) - getDate(b));
+    const latest = sorted[sorted.length - 1];
+    const latestPrice = getPrice(latest);
+    const targetTime = getDate(latest) - daysBack * 24 * 60 * 60 * 1000;
+    let closest = sorted[0];
+    for (const pt of sorted){
+      if (getDate(pt) <= targetTime) closest = pt; else break;
+    }
+    const pastPrice = getPrice(closest);
+    if (typeof latestPrice !== 'number' || typeof pastPrice !== 'number' || pastPrice === 0) return null;
+    return ((latestPrice - pastPrice) / pastPrice) * 100;
+  }
+
+  // Best-effort enrichment only — tries to fill in a missing photo,
+  // rarity/set detail, and/or 7-day/30-day trend from the RapidAPI
+  // fallback when tcgapi.dev didn't provide them. Never overwrites a
+  // field the primary source already filled in.
+  //
+  // This only works when the raw tcgapi.dev card exposes a TCGplayer
+  // product ID (tcgapi.dev's own API has a /v1/cards/tcgplayer/{id}
+  // lookup, so it likely tracks this internally) — RapidAPI's card IDs
+  // appear to be TCGplayer product IDs too, making this a reasonable
+  // bridge, not a documented guarantee. No ID, no fallback: the card is
+  // returned unchanged rather than risking a mismatched lookup.
+  async function enrichOnePieceCardFromRapidApi(card, raw){
+    raw = raw || {};
+    const missingPhoto = !card.images.small && !card.images.large;
+    const missingTrend = card._change7d == null || card._change30d == null;
+    if (!missingPhoto && !missingTrend) return card;
+
+    const tcgplayerId = raw.tcgplayer_id || raw.tcgplayerId || raw.tcgplayer_product_id || null;
+    if (!tcgplayerId) return card;
+
+    if (missingPhoto){
+      try{
+        const json = await fetchOnePieceRapidApiCard(tcgplayerId);
+        const c = json.card || json.data || json;
+        const image = c.image || c.image_url || c.imageUrl || null;
+        if (image){
+          card.images.small = image;
+          card.images.large = image;
+        }
+        if (!card.rarity && c.rarity) card.rarity = c.rarity;
+        if (!card.set.name && (c.set_name || c.setName)) card.set.name = c.set_name || c.setName;
+        if (extractMarketPrice(card) === null){
+          const market = c.market_price || c.marketPrice || c.price;
+          if (typeof market === 'number') card.tcgplayer.prices.normal.market = market;
+        }
+        if (card._lowPrice == null){
+          const low = c.low_price || c.lowPrice || c.low;
+          if (typeof low === 'number') card._lowPrice = low;
+        }
+      } catch(err){
+        console.warn('RapidAPI One Piece card-detail fallback failed', err);
+      }
+    }
+
+    if (card._change7d == null || card._change30d == null){
+      try{
+        const json = await fetchOnePieceRapidApiHistory(tcgplayerId);
+        const points = json.data || json.history || json.prices || [];
+        if (card._change7d == null){
+          const c7 = computeChangeFromHistory(points, 7);
+          if (c7 !== null) card._change7d = c7;
+        }
+        if (card._change30d == null){
+          const c30 = computeChangeFromHistory(points, 30);
+          if (c30 !== null) card._change30d = c30;
+        }
+      } catch(err){
+        console.warn('RapidAPI One Piece history fallback failed', err);
+      }
+    }
+
+    return card;
+  }
+
+  async function fetchOnePieceSets(){
+    if (cachedOnePieceSets) return cachedOnePieceSets;
+    const json = await onePieceProxyFetch('/v1/sets?game=onepiece');
+    cachedOnePieceSets = json.data || json.sets || [];
+    return cachedOnePieceSets;
+  }
+
+  function renderOnePieceSetsList(){
+    const listEl = document.getElementById('onepiece-sets-list');
+    const setupNote = document.getElementById('onepiece-setup-note');
+    const { apiKey, proxyUrl } = getOnePieceCredentials();
+
+    if (!apiKey || !proxyUrl){
+      listEl.style.display = 'none';
+      setupNote.style.display = 'flex';
+      return;
+    }
+    setupNote.style.display = 'none';
+    listEl.style.display = 'grid';
+    listEl.innerHTML = '<div class="explore-loading">Loading sets…</div>';
+
+    fetchOnePieceSets().then(sets => {
+      if (!sets.length){
+        listEl.innerHTML = '<div class="explore-loading">No sets found.</div>';
+        return;
+      }
+      listEl.innerHTML = sets.map(s => `
+        <button type="button" class="explore-set-item" data-set-id="${escapeHtml(String(s.id))}" data-set-name="${escapeHtml(s.name || '')}">
+          <div class="explore-set-logo-wrap">
+            ${(s.image_url || s.imageUrl)
+              ? `<img class="explore-set-logo" src="${s.image_url || s.imageUrl}" alt="${escapeHtml(s.name || '')}" loading="lazy" decoding="async">`
+              : '<div class="explore-set-logo-empty"></div>'}
+          </div>
+          <div class="explore-set-name">${escapeHtml(s.name || '')}</div>
+          <div class="explore-set-meta">${s.total ? s.total + ' cards' : ''}</div>
+        </button>
+      `).join('');
+
+      listEl.querySelectorAll('.explore-set-item').forEach(btn => {
+        btn.addEventListener('click', () => openOnePieceSet(btn.dataset.setId, btn.dataset.setName));
+      });
+    }).catch(err => {
+      console.error('Could not load One Piece sets', err);
+      listEl.innerHTML = `<div class="explore-loading">Could not load sets. Details: ${escapeHtml(describeError(err))}.</div>`;
+    });
+  }
+
+  // One Piece cards get their own grid renderer (rather than reusing the
+  // shared renderExploreCardsGrid) because opening a card here needs an
+  // async step first — a best-effort RapidAPI enrichment for a missing
+  // price trend — before showScanConfirm can render. cards and rawCards
+  // are parallel arrays (same index = same card; rawCards holds the
+  // untouched tcgapi.dev record enrichOnePieceCardFromRapidApi needs).
+  function renderOnePieceCardsGrid(cards, rawCards, grid, empty){
+    if (cards.length === 0){
+      grid.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+
+    grid.style.display = 'grid';
+    empty.style.display = 'none';
+    grid.innerHTML = cards.map((c, i) => `
+      <button type="button" class="explore-card-tile" data-index="${i}">
+        ${c.images && (c.images.small || c.images.large)
+          ? `<img class="explore-card-photo" src="${c.images.small || c.images.large}" alt="${escapeHtml(c.name)}" loading="lazy" decoding="async">`
+          : '<div class="explore-card-photo"></div>'}
+        <div class="explore-card-name">${escapeHtml(c.name)}</div>
+        <div class="explore-card-number">#${escapeHtml(c.number || '?')}</div>
+      </button>
+    `).join('');
+
+    grid.querySelectorAll('.explore-card-tile').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index, 10);
+        openOnePieceCardDetail(cards[idx], rawCards[idx]);
+      });
+    });
+  }
+
+  async function openOnePieceCardDetail(card, raw){
+    openScanModal();
+    showScanStatus('Loading card…', 'Fetching card details.', { spinner: true });
+    const enriched = await enrichOnePieceCardFromRapidApi(card, raw);
+    showScanConfirm(enriched);
+  }
+
+  async function openOnePieceSet(setId, setName){
+    document.getElementById('onepiece-sets-list').style.display = 'none';
+    document.getElementById('onepiece-cards-view').style.display = 'block';
+    document.getElementById('onepiece-set-title').textContent = setName;
+
+    const grid = document.getElementById('onepiece-cards-grid');
+    const empty = document.getElementById('onepiece-cards-empty');
+    empty.style.display = 'none';
+
+    if (onePieceSetCardsCache[setId]){
+      const { cards, raw } = onePieceSetCardsCache[setId];
+      renderOnePieceCardsGrid(cards, raw, grid, empty);
+      return;
+    }
+
+    grid.style.display = 'grid';
+    grid.innerHTML = '<div class="explore-loading">Loading cards…</div>';
+
+    try{
+      const json = await onePieceProxyFetch(`/v1/sets/${encodeURIComponent(setId)}/cards`);
+      const raw = json.data || json.cards || [];
+      const cards = raw.map(normalizeOnePieceCard);
+      onePieceSetCardsCache[setId] = { cards, raw };
+      renderOnePieceCardsGrid(cards, raw, grid, empty);
+    } catch(err){
+      console.error('Could not load One Piece set cards', err);
+      grid.innerHTML = `<div class="explore-loading">Could not load cards. Details: ${escapeHtml(describeError(err))}.</div>`;
+    }
+  }
+
+  document.getElementById('onepiece-back-btn').addEventListener('click', () => {
+    document.getElementById('onepiece-cards-view').style.display = 'none';
+    document.getElementById('onepiece-sets-list').style.display = 'grid';
+  });
+
   // ---------- TCG sub-tabs (Explore Sets) ----------
-  // Only Pokémon has a live card database wired up right now. The rest
+  // Pokémon and One Piece have live card databases wired up. The rest
   // render a simple "coming soon" placeholder until those APIs are added.
   const TCG_KEYS = ['pokemon', 'onepiece', 'dragonball', 'naruto', 'lorcana', 'riftbound'];
 
   const TCG_COMING_SOON = {
-    onepiece: {
-      name: 'One Piece',
-      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>'
-    },
     dragonball: {
       name: 'Dragon Ball',
       icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m12 8 1.1 2.6 2.8.3-2.1 1.9.6 2.8L12 14.1l-2.4 1.5.6-2.8-2.1-1.9 2.8-.3Z"/></svg>'
@@ -7527,6 +7883,10 @@
       if (key === 'pokemon' && !exploreSetsLoaded){
         exploreSetsLoaded = true;
         renderExploreSetsList();
+      }
+      if (key === 'onepiece' && !onePieceSetsLoaded){
+        onePieceSetsLoaded = true;
+        renderOnePieceSetsList();
       }
     });
   });
@@ -7572,6 +7932,12 @@
     const marketPrice = extractMarketPrice(card);
     const setName = card.set ? card.set.name : '';
     const printedTotal = card.set ? card.set.printedTotal : '';
+    const hasExtraStats = card._lowPrice != null || card._change7d != null || card._change30d != null;
+
+    function fmtChange(pct){
+      const sign = pct >= 0 ? '+' : '';
+      return `<span class="price-stat-value ${pct >= 0 ? 'positive' : 'negative'}">${sign}${pct.toFixed(1)}%</span>`;
+    }
 
     body.innerHTML = `
       ${image ? `<img class="scan-confirm-photo" src="${image}" alt="${escapeHtml(card.name)}">` : ''}
@@ -7579,6 +7945,14 @@
         <div class="name">${escapeHtml(card.name)}</div>
         <div class="meta">${escapeHtml(setName)} &middot; #${escapeHtml(card.number || '')}${printedTotal ? '/' + escapeHtml(String(printedTotal)) : ''}${card.rarity ? ' &middot; ' + escapeHtml(card.rarity) : ''}</div>
       </div>
+      ${hasExtraStats ? `
+        <div class="price-stats-strip">
+          ${marketPrice !== null ? `<div class="price-stat"><span class="price-stat-label">Market</span><span class="price-stat-value">${money(marketPrice)}</span></div>` : ''}
+          ${card._lowPrice != null ? `<div class="price-stat"><span class="price-stat-label">Low</span><span class="price-stat-value">${money(card._lowPrice)}</span></div>` : ''}
+          ${card._change7d != null ? `<div class="price-stat"><span class="price-stat-label">7-Day</span>${fmtChange(card._change7d)}</div>` : ''}
+          ${card._change30d != null ? `<div class="price-stat"><span class="price-stat-label">30-Day</span>${fmtChange(card._change30d)}</div>` : ''}
+        </div>
+      ` : ''}
       <div class="scan-confirm-error" id="scan-confirm-error"></div>
       <div class="scan-confirm-grid">
         <div class="field-full">
