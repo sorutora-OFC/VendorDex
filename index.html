@@ -7715,10 +7715,74 @@
     return card;
   }
 
+  // Defensive safety net: keeps only sets that actually look like One
+  // Piece, checking several plausible field names/shapes for a set's
+  // game — a string field (game/category/tcg/...) or a numeric game_id
+  // matched against the id resolved from /v1/games below. If none of
+  // those fields are present at all (this response doesn't label sets by
+  // game the way expected), it falls back to trusting the endpoint's own
+  // filtering rather than risking an empty list.
+  function isOnePieceSet(s, resolvedGameId){
+    const stringCandidates = [s.game, s.game_id, s.gameId, s.category, s.tcg, s.game_name, s.gameName];
+    if (stringCandidates.some(v => typeof v === 'string' && /one\s*piece|^op$/i.test(v))) return true;
+    if (resolvedGameId != null){
+      const idCandidates = [s.game_id, s.gameId, s.game];
+      if (idCandidates.some(v => v === resolvedGameId)) return true;
+    }
+    return false;
+  }
+
+  function filterOnePieceSets(sets, resolvedGameId){
+    const anyFieldPresent = sets.some(s => s.game !== undefined || s.game_id !== undefined || s.gameId !== undefined || s.category !== undefined || s.tcg !== undefined || s.game_name !== undefined || s.gameName !== undefined);
+    return anyFieldPresent ? sets.filter(s => isOnePieceSet(s, resolvedGameId)) : sets;
+  }
+
+  // Rather than guessing what identifies "One Piece" in this API, ask it
+  // directly: tcgapi.dev's own SDK exposes games.list(), so /v1/games
+  // should return every supported game with its id/slug/name — find the
+  // entry that says "One Piece" and use ITS id/slug for the sets lookup.
+  // This is what actually fixes sets from other TCGs leaking in, since
+  // the previous approach was guessing at a query param / path shape
+  // that didn't match how this API is actually structured.
+  let onePieceGameRef = null; // { id, slug }
+
+  async function resolveOnePieceGameRef(){
+    if (onePieceGameRef) return onePieceGameRef;
+    const json = await onePieceProxyFetch('/v1/games');
+    const games = json.data || json.games || [];
+    const match = games.find(g => {
+      const label = [g.name, g.slug, g.id].filter(Boolean).join(' ');
+      return /one\s*piece/i.test(label);
+    });
+    if (!match) throw new Error('Could not find "One Piece" in tcgapi.dev\'s /v1/games list.');
+    onePieceGameRef = { id: match.id, slug: match.slug || match.id };
+    return onePieceGameRef;
+  }
+
   async function fetchOnePieceSets(){
     if (cachedOnePieceSets) return cachedOnePieceSets;
-    const json = await onePieceProxyFetch('/v1/sets?game=onepiece');
-    cachedOnePieceSets = json.data || json.sets || [];
+
+    let allSets = [];
+    let resolvedGameId = null;
+    try{
+      // Ask the API what its real identifier for "One Piece" is, then use
+      // that — this is the principled fix, not another endpoint guess.
+      const ref = await resolveOnePieceGameRef();
+      resolvedGameId = ref.id;
+      const json = await onePieceProxyFetch(`/v1/games/${encodeURIComponent(ref.slug)}/sets`);
+      allSets = json.data || json.sets || [];
+    } catch(err){
+      console.warn('Could not resolve One Piece via /v1/games, falling back to guesses', err);
+      try{
+        const json = await onePieceProxyFetch('/v1/games/onepiece/sets');
+        allSets = json.data || json.sets || [];
+      } catch(err2){
+        const json = await onePieceProxyFetch('/v1/sets?game=onepiece');
+        allSets = json.data || json.sets || [];
+      }
+    }
+
+    cachedOnePieceSets = filterOnePieceSets(allSets, resolvedGameId);
     return cachedOnePieceSets;
   }
 
