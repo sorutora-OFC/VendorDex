@@ -892,6 +892,35 @@
   .icon-btn svg{ width: 16px; height: 16px; }
   .icon-btn:hover{ border-color: var(--gold); color: var(--gold); }
 
+  .search-tcg-toggle{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .search-tcg-btn{
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--sleeve);
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .search-tcg-btn svg{ width: 16px; height: 16px; flex-shrink: 0; }
+  .search-tcg-btn:hover{ border-color: var(--holo); color: var(--text); }
+  .search-tcg-btn.active{
+    background: linear-gradient(135deg, var(--gold), var(--holo));
+    border-color: transparent;
+    color: var(--ink);
+  }
   .search-modal-input{
     width: 100%;
     background: var(--ink);
@@ -4069,6 +4098,16 @@
         <button type="button" id="search-cards-modal-close" class="scan-modal-close">&times;</button>
       </div>
       <div class="scan-modal-body">
+        <div class="search-tcg-toggle" id="search-tcg-toggle">
+          <button type="button" class="search-tcg-btn active" data-tcg="pokemon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h6M15 12h6"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
+            <span>Pokémon</span>
+          </button>
+          <button type="button" class="search-tcg-btn" data-tcg="onepiece">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>
+            <span>One Piece</span>
+          </button>
+        </div>
         <input type="text" id="search-cards-input" class="search-modal-input" placeholder="Search by card name…">
         <div id="search-cards-results"></div>
       </div>
@@ -6785,6 +6824,8 @@
     document.getElementById('search-cards-modal-overlay').style.display = 'flex';
     const input = document.getElementById('search-cards-input');
     input.value = '';
+    searchCardsSelectedTcg = 'pokemon';
+    document.querySelectorAll('.search-tcg-btn').forEach(b => b.classList.toggle('active', b.dataset.tcg === 'pokemon'));
     document.getElementById('search-cards-results').innerHTML = '<div class="search-empty-msg">Start typing a card name to search.</div>';
     setTimeout(() => input.focus(), 0);
   }
@@ -6821,6 +6862,37 @@
     if (e.target.id === 'search-cards-modal-overlay') closeSearchCardsModal();
   });
 
+  // ---------- Search Cards: TCG selection ----------
+  // Which game the search box currently searches. Defaults to Pokémon
+  // every time the modal opens (see openSearchCardsModal above).
+  let searchCardsSelectedTcg = 'pokemon';
+
+  document.querySelectorAll('.search-tcg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.tcg === searchCardsSelectedTcg) return;
+      searchCardsSelectedTcg = btn.dataset.tcg;
+      document.querySelectorAll('.search-tcg-btn').forEach(b => b.classList.toggle('active', b === btn));
+
+      const input = document.getElementById('search-cards-input');
+      const container = document.getElementById('search-cards-results');
+      const query = input.value.trim();
+      if (!query){
+        container.innerHTML = '<div class="search-empty-msg">Start typing a card name to search.</div>';
+      } else {
+        container.innerHTML = '<div class="search-empty-msg">Searching…</div>';
+        runTcgCardSearch(query);
+      }
+    });
+  });
+
+  function runTcgCardSearch(query){
+    if (searchCardsSelectedTcg === 'onepiece'){
+      runOnePieceCardSearch(query);
+    } else {
+      runCardSearch(query);
+    }
+  }
+
   let _cardSearchTimer = null;
   document.getElementById('search-cards-input').addEventListener('input', (e) => {
     const query = e.target.value.trim();
@@ -6830,7 +6902,7 @@
       return;
     }
     document.getElementById('search-cards-results').innerHTML = '<div class="search-empty-msg">Searching…</div>';
-    _cardSearchTimer = setTimeout(() => runCardSearch(query), 300);
+    _cardSearchTimer = setTimeout(() => runTcgCardSearch(query), 300);
   });
 
   // ---------- Multi-source card lookup (name search) ----------
@@ -7022,6 +7094,77 @@
       console.error('Card search failed', err);
       const detail = describeError(err);
       container.innerHTML = `<div class="search-empty-msg">Search failed. Details: ${escapeHtml(detail)}.</div>`;
+    }
+  }
+
+  // ---------- One Piece card search (Search Cards modal) ----------
+  // Mirrors runCardSearch/renderCardSearchResults above — same caching and
+  // request-cancellation approach — but goes through the CORS proxy and
+  // normalizes results with normalizeOnePieceCard so clicking a result
+  // gets the RapidAPI photo/trend fallback via openOnePieceCardDetail,
+  // same as Explore Sets.
+  const _onePieceSearchCache = new Map();
+  let _onePieceSearchAbortController = null;
+
+  function renderOnePieceSearchResults(cards, rawCards, container){
+    if (cards.length === 0){
+      container.innerHTML = '<div class="search-empty-msg">No cards found. Try a different spelling.</div>';
+      return;
+    }
+
+    container.innerHTML = `<div class="search-results-list">${cards.map((card, i) => `
+      <button type="button" class="search-result-row onepiece-search-result" data-index="${i}" style="width:100%; cursor:pointer; border:1px solid var(--line); background:var(--ink);">
+        ${(card.images && (card.images.small || card.images.large)) ? `<img src="${card.images.small || card.images.large}" alt="${escapeHtml(card.name)}" loading="lazy" decoding="async">` : '<div class="list-thumb-empty"></div>'}
+        <div class="search-result-info">
+          <div class="name">${escapeHtml(card.name)}</div>
+          <div class="meta">${escapeHtml(card.set ? card.set.name : '')} &middot; #${escapeHtml(card.number || '')}</div>
+        </div>
+      </button>
+    `).join('')}</div>`;
+
+    container.querySelectorAll('.onepiece-search-result').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index, 10);
+        closeSearchCardsModal();
+        openOnePieceCardDetail(cards[idx], rawCards[idx]);
+      });
+    });
+  }
+
+  async function runOnePieceCardSearch(query){
+    const container = document.getElementById('search-cards-results');
+    const { apiKey, proxyUrl } = getOnePieceCredentials();
+    if (!apiKey || !proxyUrl){
+      container.innerHTML = '<div class="search-empty-msg">Add your tcgapi.dev key and CORS proxy URL in Settings &rarr; API Keys &rarr; One Piece to search here.</div>';
+      return;
+    }
+
+    const cacheKey = query.toLowerCase();
+    const cached = _onePieceSearchCache.get(cacheKey);
+    if (cached && (Date.now() - cached.ts) < CARD_SEARCH_CACHE_MAX_AGE_MS){
+      renderOnePieceSearchResults(cached.cards, cached.raw, container);
+      return;
+    }
+
+    if (_onePieceSearchAbortController) _onePieceSearchAbortController.abort();
+    _onePieceSearchAbortController = new AbortController();
+    const { signal } = _onePieceSearchAbortController;
+
+    try{
+      const json = await onePieceProxyFetch(`/v1/search?q=${encodeURIComponent(query)}&game=onepiece&per_page=20`, signal);
+      const raw = json.data || json.results || [];
+      const cards = raw.map(normalizeOnePieceCard);
+
+      _onePieceSearchCache.set(cacheKey, { cards, raw, ts: Date.now() });
+      if (_onePieceSearchCache.size > CARD_SEARCH_CACHE_MAX_ENTRIES){
+        _onePieceSearchCache.delete(_onePieceSearchCache.keys().next().value);
+      }
+
+      renderOnePieceSearchResults(cards, raw, container);
+    } catch(err){
+      if (err && err.name === 'AbortError') return;
+      console.error('One Piece card search failed', err);
+      container.innerHTML = `<div class="search-empty-msg">Search failed. Details: ${escapeHtml(describeError(err))}.</div>`;
     }
   }
 
@@ -7552,10 +7695,10 @@
     };
   }
 
-  async function onePieceProxyFetch(path){
+  async function onePieceProxyFetch(path, signal){
     const { apiKey, proxyUrl } = getOnePieceCredentials();
     if (!apiKey || !proxyUrl) throw new Error('MISSING_CREDENTIALS');
-    const res = await fetch(proxyUrl + path, { headers: { 'X-API-Key': apiKey } });
+    const res = await fetch(proxyUrl + path, { headers: { 'X-API-Key': apiKey }, signal });
     if (!res.ok) throw new Error('One Piece proxy request failed: ' + res.status);
     return res.json();
   }
