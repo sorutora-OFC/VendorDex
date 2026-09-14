@@ -8476,6 +8476,7 @@
         <div class="field-full">
           <label for="scan-in-market">Market price ($)</label>
           <input id="scan-in-market" type="number" step="0.01" min="0" value="${marketPrice !== null ? marketPrice : ''}">
+          <div class="api-key-note" id="scan-market-fallback-note"></div>
         </div>
         <div>
           <label for="scan-in-cost">Cost — what you paid ($)</label>
@@ -8558,6 +8559,53 @@
       render();
       closeScanModal();
     });
+
+    // pokemontcg.io doesn't have tcgplayer pricing for every card — newer
+    // illustration rares especially often have no listing yet. Rather
+    // than leave the field blank, quietly check PokéWallet in the
+    // background and fill it in if that source has a price this one
+    // doesn't. Never overwrites a price that was already found.
+    if (marketPrice === null){
+      attemptMarketPriceFallback(card);
+    }
+  }
+
+  async function attemptMarketPriceFallback(card){
+    const noteEl = document.getElementById('scan-market-fallback-note');
+    if (!noteEl) return; // modal already closed
+    noteEl.textContent = 'No listed price yet — checking another source…';
+
+    try{
+      const results = await searchPokeWalletByName(card.name);
+
+      // The person may have closed the modal, opened a different card, or
+      // already typed a price themselves while this was in flight.
+      const input = document.getElementById('scan-in-market');
+      const currentNoteEl = document.getElementById('scan-market-fallback-note');
+      if (!input || !currentNoteEl || input.value !== '') return;
+
+      // Prefer a result matching the same set + number if one exists,
+      // since a name-only search can return other printings of the card.
+      const match = results.find(r => {
+        const c = r.card;
+        return c.number && card.number && c.number === card.number &&
+               c.set && card.set && c.set.name && card.set.name &&
+               c.set.name.toLowerCase() === card.set.name.toLowerCase();
+      }) || results[0];
+
+      const price = match ? extractMarketPrice(match.card) : null;
+      if (price !== null){
+        input.value = price;
+        input.style.borderColor = 'var(--profit)';
+        currentNoteEl.textContent = `Filled ${money(price)} from ${match.source} — pokemontcg.io had no price for this card.`;
+      } else {
+        currentNoteEl.textContent = 'No price found for this card anywhere — enter it manually.';
+      }
+    } catch(err){
+      console.warn('Market price fallback failed', err);
+      const currentNoteEl = document.getElementById('scan-market-fallback-note');
+      if (currentNoteEl) currentNoteEl.textContent = '';
+    }
   }
 
   function extractNumberTotal(text){
