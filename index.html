@@ -1121,6 +1121,28 @@
     justify-content: space-between;
     margin-bottom: 16px;
   }
+  .schedule-section{
+    position: relative;
+    padding: 0 0 28px;
+  }
+  .schedule-section:first-child{ padding-top: 0; }
+  .schedule-section:not(:last-child)::after{
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      rgba(139, 92, 246, 0.35),
+      rgba(255, 255, 255, 0.06),
+      transparent
+    );
+  }
+  .schedule-section + .schedule-section{
+    margin-top: 28px;
+  }
   .circle-add-btn{
     display: flex;
     align-items: center;
@@ -3662,88 +3684,94 @@
   <div id="screen-schedule" style="display:none;">
     <div class="dash-welcome">Schedule <span id="schedule-count-label" style="color:var(--muted); font-size:14px;"></span></div>
 
-    <button type="button" id="add-show-box" class="add-card-box" aria-label="Add a show">
-      <span class="add-card-circle">
-        <svg class="plus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </span>
-      <span class="add-card-label">Add a Show</span>
-    </button>
+    <div class="schedule-section">
+      <div class="section-title-row">
+        <div class="dash-welcome" style="margin-bottom:0;">Upcoming Shows</div>
+        <button type="button" id="add-show-box" class="circle-add-btn" aria-label="Add a show">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
 
-    <div class="bring-panel" id="bring-panel" style="display:none;">
-      <button type="button" id="bring-toggle-btn" class="bring-toggle-row" aria-expanded="true">
-        <div class="bring-toggle-text">
-          <div class="bring-title">
-            <svg class="bring-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8Z"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>
-            What Should I Bring?
+      <div class="bring-panel" id="bring-panel" style="display:none;">
+        <button type="button" id="bring-toggle-btn" class="bring-toggle-row" aria-expanded="true">
+          <div class="bring-toggle-text">
+            <div class="bring-title">
+              <svg class="bring-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8Z"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>
+              What Should I Bring?
+            </div>
+            <div class="bring-subtitle" id="bring-subtitle"></div>
           </div>
-          <div class="bring-subtitle" id="bring-subtitle"></div>
+          <svg id="bring-toggle-icon" class="bring-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="bring-body" id="bring-body">
+          <div class="bring-basis-note" id="bring-basis-note"></div>
+          <div class="bring-recommendations" id="bring-recommendations"></div>
+          <div class="bring-total-row">
+            <span class="bring-total-label">Estimated inventory value to bring</span>
+            <span class="bring-total-value" id="bring-total-value">$0.00</span>
+          </div>
         </div>
-        <svg id="bring-toggle-icon" class="bring-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      <div class="bring-body" id="bring-body">
-        <div class="bring-basis-note" id="bring-basis-note"></div>
-        <div class="bring-recommendations" id="bring-recommendations"></div>
-        <div class="bring-total-row">
-          <span class="bring-total-label">Estimated inventory value to bring</span>
-          <span class="bring-total-value" id="bring-total-value">$0.00</span>
+      </div>
+
+      <div class="calendar-toggle-row">
+        <button type="button" id="calendar-toggle-btn" class="calendar-toggle-btn" aria-expanded="true">
+          <span id="calendar-toggle-label">Hide Calendar</span>
+          <svg id="calendar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+
+      <div class="calendar-wrap" id="calendar-wrap">
+        <div class="calendar-header">
+          <button type="button" id="calendar-prev-btn" class="calendar-nav-btn">&larr;</button>
+          <div class="calendar-month-label" id="calendar-month-label"></div>
+          <button type="button" id="calendar-next-btn" class="calendar-nav-btn">&rarr;</button>
         </div>
+        <div class="calendar-weekdays">
+          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        </div>
+        <div class="calendar-days" id="calendar-days"></div>
+      </div>
+
+      <div class="schedule-filter-note" id="schedule-filter-note" style="display:none;">
+        <span id="schedule-filter-text"></span>
+        <button type="button" id="schedule-filter-clear" class="date-range-clear">Clear</button>
+      </div>
+
+      <div class="grid" id="schedule-grid" style="display:none;"></div>
+      <div class="empty" id="schedule-empty" style="display:none;">
+        <strong>No shows scheduled</strong>
+        Add your first show above to start building your schedule.
       </div>
     </div>
 
-    <div class="calendar-toggle-row">
-      <button type="button" id="calendar-toggle-btn" class="calendar-toggle-btn" aria-expanded="true">
-        <span id="calendar-toggle-label">Hide Calendar</span>
-        <svg id="calendar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-    </div>
-
-    <div class="calendar-wrap" id="calendar-wrap">
-      <div class="calendar-header">
-        <button type="button" id="calendar-prev-btn" class="calendar-nav-btn">&larr;</button>
-        <div class="calendar-month-label" id="calendar-month-label"></div>
-        <button type="button" id="calendar-next-btn" class="calendar-nav-btn">&rarr;</button>
+    <div class="schedule-section">
+      <div class="section-title-row">
+        <div class="dash-welcome" style="margin-bottom:0;">PSA/TAG Submissions</div>
+        <button type="button" id="add-submission-box" class="circle-add-btn" aria-label="Add a submission">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
       </div>
-      <div class="calendar-weekdays">
-        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+
+      <div class="grid" id="submissions-grid" style="display:none;"></div>
+      <div class="empty" id="submissions-empty" style="display:none;">
+        <strong>No submissions tracked</strong>
+        Tap the + above when you send cards out for grading.
       </div>
-      <div class="calendar-days" id="calendar-days"></div>
     </div>
 
-    <div class="schedule-filter-note" id="schedule-filter-note" style="display:none;">
-      <span id="schedule-filter-text"></span>
-      <button type="button" id="schedule-filter-clear" class="date-range-clear">Clear</button>
-    </div>
+    <div class="schedule-section">
+      <div class="section-title-row">
+        <div class="dash-welcome" style="margin-bottom:0;">Giveaways</div>
+        <button type="button" id="add-giveaway-box" class="circle-add-btn" aria-label="Add a giveaway">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
 
-    <div class="grid" id="schedule-grid" style="display:none;"></div>
-    <div class="empty" id="schedule-empty" style="display:none;">
-      <strong>No shows scheduled</strong>
-      Add your first show above to start building your schedule.
-    </div>
-
-    <div class="section-title-row" style="margin-top:30px;">
-      <div class="dash-welcome" style="margin-bottom:0;">PSA/TAG Submissions</div>
-      <button type="button" id="add-submission-box" class="circle-add-btn" aria-label="Add a submission">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
-    </div>
-
-    <div class="grid" id="submissions-grid" style="display:none;"></div>
-    <div class="empty" id="submissions-empty" style="display:none;">
-      <strong>No submissions tracked</strong>
-      Tap the + above when you send cards out for grading.
-    </div>
-
-    <div class="section-title-row" style="margin-top:30px;">
-      <div class="dash-welcome" style="margin-bottom:0;">Giveaways</div>
-      <button type="button" id="add-giveaway-box" class="circle-add-btn" aria-label="Add a giveaway">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
-    </div>
-
-    <div class="grid" id="giveaways-grid" style="display:none;"></div>
-    <div class="empty" id="giveaways-empty" style="display:none;">
-      <strong>No giveaways scheduled</strong>
-      Tap the + above to add your first giveaway.
+      <div class="grid" id="giveaways-grid" style="display:none;"></div>
+      <div class="empty" id="giveaways-empty" style="display:none;">
+        <strong>No giveaways scheduled</strong>
+        Tap the + above to add your first giveaway.
+      </div>
     </div>
   </div>
 
