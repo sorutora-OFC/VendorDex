@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-<title>TCG Inventory Tracker II — TCGAPI Test Build</title>
+<title>TCG Inventory Tracker II</title>
 <meta name="description" content="Track your TCG inventory, sales, profit, and upcoming shows.">
 <meta name="theme-color" content="#121214">
 <meta name="color-scheme" content="dark">
@@ -773,21 +773,6 @@
     height: 36px;
     background: var(--ink);
     border-radius: 6px;
-  }
-  .explore-set-abbr{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 70%;
-    height: 36px;
-    background: var(--ink);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    font-size: 12.5px;
-    letter-spacing: 0.04em;
-    color: var(--holo);
   }
   .explore-set-name{
     font-family: 'Space Grotesk', sans-serif;
@@ -6939,7 +6924,7 @@
       intro: '',
       fields: [
         { id: 'pokemontcg', label: 'Pokémon TCG API', storageKey: 'tcg-apikey-pokemontcg', default: '5fcff114-b2e6-47a9-a1db-a9e94fe11c0d', note: '' },
-        { id: 'tcgapidev', label: 'TCGApi.dev', storageKey: 'tcg-apikey-tcgapidev', default: 'tcg_live_74d6498285db81bf48765dd573b113a25deadbcb', note: 'TEST BUILD: this is now the primary source for Pokémon sets, cards, photos, and search — routed through the same CORS proxy configured under One Piece below.' },
+        { id: 'tcgapidev', label: 'TCGApi.dev', storageKey: 'tcg-apikey-tcgapidev', default: 'tcg_live_74d6498285db81bf48765dd573b113a25deadbcb', note: 'Currently not called by Search/Look Up — tcgapi.dev\'s server only allows requests from its own site, so this key is kept for whenever that changes.' },
         { id: 'pokewallet', label: 'PokéWallet', storageKey: 'tcg-apikey-pokewallet', default: 'pk_live_9e34ebfd7d9640edc69b747d55d4a9f31ac79472acbd9925', note: '' }
       ]
     },
@@ -7238,128 +7223,6 @@
   // so the rest of the app (extractMarketPrice, showScanConfirm, etc.)
   // doesn't need to know which source a card came from.
 
-  // ---------- Pokémon via tcgapi.dev (TEST BUILD) ----------
-  // This file (VendorDexTCGAPI.html) is a duplicate of the main app used
-  // to test switching Pokémon's Sets/Cards/Search/Prices data over to
-  // tcgapi.dev. tcgapi.dev blocks direct browser calls the same way for
-  // every game (see the Cloudflare Worker's own comments), so this reuses
-  // the same CORS proxy already set up for One Piece — Settings > API
-  // Keys > One Piece holds both the proxy URL and a tcgapi.dev key.
-  // Confirmed field names/endpoints below come straight from tcgapi.dev's
-  // own docs (tcgapi.dev/api/sets, /cards, /search, /games), not guesses.
-
-  function getTcgApiDevCredentials(){
-    return {
-      apiKey: (apiKeys.tcgapidev || apiKeys['onepiece-apikey'] || '').trim(),
-      proxyUrl: (apiKeys['onepiece-proxy'] || '').trim().replace(/\/+$/, '')
-    };
-  }
-
-  async function tcgApiDevFetch(path, signal){
-    const { apiKey, proxyUrl } = getTcgApiDevCredentials();
-    if (!apiKey || !proxyUrl) throw new Error('MISSING_CREDENTIALS');
-    const res = await fetch(proxyUrl + path, { headers: { 'X-API-Key': apiKey }, signal });
-    if (!res.ok) throw new Error('tcgapi.dev proxy request failed: ' + res.status);
-    return res.json();
-  }
-
-  // tcgapi.dev's list endpoints (sets, cards, search) cap at per_page=100
-  // (vs. pokemontcg.io's 250), so multi-page sets/large sets need a few
-  // requests. Walks meta.has_more up to a safety cap.
-  async function tcgApiDevFetchAllPages(basePath, maxPages){
-    maxPages = maxPages || 5;
-    let page = 1;
-    let all = [];
-    while (page <= maxPages){
-      const sep = basePath.includes('?') ? '&' : '?';
-      const json = await tcgApiDevFetch(`${basePath}${sep}page=${page}&per_page=100`);
-      const items = json.data || [];
-      all = all.concat(items);
-      if (!json.meta || !json.meta.has_more) break;
-      page++;
-    }
-    return all;
-  }
-
-  // Normalizes a tcgapi.dev card into the same pokemontcg.io-shaped
-  // pseudo-card object the rest of the app already expects, so
-  // extractMarketPrice/showScanConfirm/renderExploreCardsGrid work
-  // unchanged regardless of source.
-  function normalizeTcgApiDevCard(raw){
-    const priceRow = Array.isArray(raw.prices) ? raw.prices[0] : null;
-    const market = raw.market_price != null ? raw.market_price : (priceRow ? priceRow.market_price : null);
-    const low = raw.low_price != null ? raw.low_price : (priceRow ? priceRow.low_price : null);
-    const change7d = raw.price_change_7d != null ? raw.price_change_7d : (priceRow ? priceRow.price_change_7d : null);
-    const change30d = raw.price_change_30d != null ? raw.price_change_30d : (priceRow ? priceRow.price_change_30d : null);
-
-    return {
-      id: raw.id,
-      name: raw.name || '',
-      number: raw.number || '',
-      rarity: raw.rarity || '',
-      images: { small: raw.image_url || '', large: raw.image_url || '' },
-      set: { name: raw.set_name || '', printedTotal: null },
-      tcgplayer: { prices: { normal: { market: typeof market === 'number' ? market : null } } },
-      _lowPrice: typeof low === 'number' ? low : null,
-      _change7d: typeof change7d === 'number' ? change7d : null,
-      _change30d: typeof change30d === 'number' ? change30d : null,
-      _tcgApiDevId: raw.id
-    };
-  }
-
-  // Fetches the full card record — GET /v1/cards/:id, confirmed in
-  // tcgapi.dev's Cards docs, response includes image_url plus rarity,
-  // set_name, etc. This is what the sets/cards-in-set list doesn't
-  // reliably include, which is why photos weren't showing up before.
-  async function fetchTcgApiDevCardById(id){
-    const json = await tcgApiDevFetch(`/v1/cards/${encodeURIComponent(id)}`);
-    return json.data || json;
-  }
-
-  // Fills in whatever a card is still missing — photo/rarity/set from the
-  // full card record, and market/low/7d/30d from the separate prices
-  // endpoint (price_change_7d/30d only live there, confirmed in the same
-  // docs) — run lazily right when a card is opened, not for a whole grid.
-  async function enrichTcgApiDevCard(card){
-    if (!card._tcgApiDevId) return card;
-
-    const missingPhoto = !card.images.small && !card.images.large;
-    if (missingPhoto){
-      try{
-        const full = await fetchTcgApiDevCardById(card._tcgApiDevId);
-        if (full && full.image_url){
-          card.images.small = full.image_url;
-          card.images.large = full.image_url;
-        }
-        if (!card.rarity && full && full.rarity) card.rarity = full.rarity;
-        if (!card.set.name && full && full.set_name) card.set.name = full.set_name;
-      } catch(err){
-        console.warn('Could not load tcgapi.dev card details for', card._tcgApiDevId, err);
-      }
-    }
-
-    const missingPricing = extractMarketPrice(card) == null || card._lowPrice == null || card._change7d == null || card._change30d == null;
-    if (missingPricing){
-      try{
-        const json = await tcgApiDevFetch(`/v1/cards/${encodeURIComponent(card._tcgApiDevId)}/prices`);
-        const entries = Array.isArray(json.data) ? json.data : (json.data ? [json.data] : []);
-        const entry = entries[0];
-        if (entry){
-          if (extractMarketPrice(card) == null && typeof entry.market_price === 'number'){
-            card.tcgplayer.prices.normal.market = entry.market_price;
-          }
-          if (card._lowPrice == null && typeof entry.low_price === 'number') card._lowPrice = entry.low_price;
-          if (card._change7d == null && typeof entry.price_change_7d === 'number') card._change7d = entry.price_change_7d;
-          if (card._change30d == null && typeof entry.price_change_30d === 'number') card._change30d = entry.price_change_30d;
-        }
-      } catch(err){
-        console.warn('Could not load tcgapi.dev pricing for card', card._tcgApiDevId, err);
-      }
-    }
-
-    return card;
-  }
-
   async function searchPokemonTcgApiByName(query, signal){
     const cleanQuery = query.replace(/"/g, '');
     const url = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(`name:"${cleanQuery}*"`)}&pageSize=20&orderBy=name`;
@@ -7370,21 +7233,21 @@
   }
 
   async function searchTcgApiDevByName(query, signal){
-    const json = await tcgApiDevFetch(`/v1/search?q=${encodeURIComponent(query)}&game=pokemon&sort=relevance&per_page=20`, signal);
+    const url = `https://api.tcgapi.dev/v1/search?q=${encodeURIComponent(query)}&game=pokemon&sort=relevance&per_page=20`;
+    const res = await fetch(url, { headers: { 'X-API-Key': apiKeys.tcgapidev }, signal });
+    if (!res.ok) throw new Error('TCG API request failed: ' + res.status);
+    const json = await res.json();
     const results = json.data || [];
     return results.map(r => ({
       card: {
-        id: r.id,
         name: r.name,
         number: r.number || '',
         rarity: r.rarity || '',
         images: { large: r.image_url || '', small: r.image_url || '' },
         set: { name: r.set_name || '', printedTotal: null },
-        tcgplayer: { prices: { normal: { market: typeof r.market_price === 'number' ? r.market_price : null } } },
-        _lowPrice: typeof r.low_price === 'number' ? r.low_price : null,
-        _tcgApiDevId: r.id
+        tcgplayer: { prices: { normal: { market: typeof r.market_price === 'number' ? r.market_price : null } } }
       },
-      source: 'TCG API (tcgapi.dev)'
+      source: 'TCG API'
     }));
   }
 
@@ -7426,12 +7289,16 @@
   }
 
   async function multiSourceCardSearch(query, signal){
-    // TEST BUILD: tcgapi.dev is now tried FIRST for Pokémon — routed
-    // through the same CORS proxy used for One Piece, since tcgapi.dev
-    // blocks direct browser calls the same way regardless of game.
-    // pokemontcg.io and PokéWallet remain as fallbacks in case tcgapi.dev
-    // has no match, or the proxy/key isn't configured in Settings yet.
-    const providers = [searchTcgApiDevByName, searchPokemonTcgApiByName, searchPokeWalletByName];
+    // tcgapi.dev is intentionally NOT in this list. Its server sends
+    // Access-Control-Allow-Origin: https://tcgapi.dev on every response —
+    // hardcoded to its own site, not reflecting the caller's origin or
+    // using a wildcard. That means it rejects direct browser calls from
+    // any third-party app (this one included) regardless of API key
+    // validity; it's built for server-side/backend use only (see their
+    // own Node/Python quickstart examples). searchTcgApiDevByName is left
+    // defined below in case that ever changes, but calling it from here
+    // would just waste a guaranteed-failing request on every search.
+    const providers = [searchPokemonTcgApiByName, searchPokeWalletByName];
     let lastError = null;
     for (const provider of providers){
       try{
@@ -7449,8 +7316,6 @@
   // If a selected card came from PokéWallet, its image needs a separate
   // authenticated fetch (the /images endpoint requires the API key, which
   // a plain <img src> can't send) — everything else can use the card as-is.
-  // If it came from tcgapi.dev, the search result already has market/low
-  // price but not the 7d/30d trend, so this fetches that too.
   async function resolveCardImage(entry){
     const card = entry.card;
     if (entry.source === 'PokéWallet' && card._pokewalletId && !card.images.large){
@@ -7461,9 +7326,6 @@
       } catch(err){
         console.warn('Could not fetch PokéWallet image', err);
       }
-    }
-    if (card._tcgApiDevId){
-      await enrichTcgApiDevCard(card);
     }
     return card;
   }
@@ -7960,20 +7822,11 @@
   }
 
   async function fetchAndCacheExploreSets(){
-    // TEST BUILD: pulling Pokémon sets from tcgapi.dev instead of
-    // pokemontcg.io. Confirmed endpoint per tcgapi.dev's Games docs:
-    // GET /v1/games/:slug/sets. Note: tcgapi.dev's set objects don't
-    // include a logo/image field the way pokemontcg.io's did — the set
-    // tile falls back to a text abbreviation badge instead (see
-    // renderExploreSetsList below).
-    const rawSets = await tcgApiDevFetchAllPages('/v1/games/pokemon/sets', 3);
-    const sets = rawSets.map(s => ({
-      id: s.id,
-      name: s.name,
-      abbreviation: s.abbreviation || '',
-      total: s.card_count || null,
-      releaseDate: s.release_date || ''
-    }));
+    const url = 'https://api.pokemontcg.io/v2/sets?pageSize=250';
+    const res = await fetch(url, { headers: { 'X-Api-Key': apiKeys.pokemontcg } });
+    if (!res.ok) throw new Error('Set list request failed: ' + res.status);
+    const json = await res.json();
+    const sets = json.data || [];
     sets.sort((a, b) => (b.releaseDate || '').localeCompare(a.releaseDate || ''));
     cachedExploreSets = sets;
     try{
@@ -8027,14 +7880,14 @@
         }
       );
       listEl.innerHTML = sets.map(s => `
-        <button type="button" class="explore-set-item" data-set-id="${escapeHtml(String(s.id))}" data-set-name="${escapeHtml(s.name)}">
+        <button type="button" class="explore-set-item" data-set-id="${escapeHtml(s.id)}" data-set-name="${escapeHtml(s.name)}">
           <div class="explore-set-logo-wrap">
-            ${s.abbreviation
-              ? `<div class="explore-set-abbr">${escapeHtml(s.abbreviation)}</div>`
+            ${s.images && s.images.logo
+              ? `<img class="explore-set-logo" src="${s.images.logo}" alt="${escapeHtml(s.name)}" loading="lazy" decoding="async">`
               : '<div class="explore-set-logo-empty"></div>'}
           </div>
           <div class="explore-set-name">${escapeHtml(s.name)}</div>
-          <div class="explore-set-meta">${s.total ? s.total + ' cards' : ''}</div>
+          <div class="explore-set-meta">${escapeHtml(s.series || '')}${s.total ? ' · ' + s.total + ' cards' : ''}</div>
         </button>
       `).join('');
 
@@ -8071,17 +7924,10 @@
     `).join('');
 
     grid.querySelectorAll('.explore-card-tile').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', () => {
         const idx = parseInt(btn.dataset.index, 10);
         openScanModal();
-        // Sets/cards-in-set listings from tcgapi.dev don't reliably
-        // include photos or pricing, so fetch the full record now.
-        const card = cards[idx];
-        if (card._tcgApiDevId){
-          showScanStatus('Loading card…', 'Fetching photo and pricing.', { spinner: true });
-          await enrichTcgApiDevCard(card);
-        }
-        showScanConfirm(card);
+        showScanConfirm(cards[idx]);
       });
     });
   }
@@ -8107,10 +7953,11 @@
     try{
       const cards = await withAutoRetry(
         async () => {
-          // TEST BUILD: cards-in-a-set now come from tcgapi.dev — confirmed
-          // endpoint per its Sets docs: GET /v1/sets/:id/cards.
-          const raw = await tcgApiDevFetchAllPages(`/v1/sets/${encodeURIComponent(setId)}/cards`, 3);
-          return raw.map(normalizeTcgApiDevCard);
+          const url = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent('set.id:' + setId)}&pageSize=250&orderBy=number`;
+          const res = await fetch(url, { headers: { 'X-Api-Key': apiKeys.pokemontcg } });
+          if (!res.ok) throw new Error('Card list request failed: ' + res.status);
+          const json = await res.json();
+          return json.data || [];
         },
         (attempt, max, delay) => {
           grid.innerHTML = `<div class="explore-loading">Still trying to load cards\u2026 (attempt ${attempt} of ${max}, retrying in ${delay}s)</div>`;
