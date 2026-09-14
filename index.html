@@ -983,20 +983,22 @@
     width: 100%;
     padding: 15px 16px;
     margin: 4px 0 22px;
-    background: linear-gradient(135deg, var(--gold), var(--holo));
-    border: none;
+    background: var(--ink);
+    border: 1px solid rgba(167,139,250,0.5);
     border-radius: 12px;
-    color: var(--ink);
+    color: var(--holo);
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
     font-size: 15px;
     letter-spacing: 0.03em;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 0 18px rgba(167,139,250,0.45), 0 0 42px rgba(139,92,246,0.28), 0 10px 24px -8px rgba(0,0,0,0.6);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   }
   .vendor-mode-btn:hover{
     transform: translateY(-2px);
-    box-shadow: 0 10px 24px -8px rgba(167,139,250,0.55);
+    border-color: var(--holo);
+    box-shadow: 0 0 22px rgba(167,139,250,0.65), 0 0 54px rgba(139,92,246,0.4), 0 12px 28px -8px rgba(0,0,0,0.65);
   }
   .vendor-mode-btn svg{ width: 18px; height: 18px; }
 
@@ -1111,12 +1113,19 @@
     gap: 10px;
     flex-shrink: 0;
   }
-  .vendor-cart-row-price{
+  .vendor-cart-row-price-input{
+    width: 76px;
+    background: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 5px 7px;
     font-family: 'JetBrains Mono', monospace;
     font-weight: 700;
-    font-size: 13.5px;
+    font-size: 13px;
     color: var(--text);
+    text-align: right;
   }
+  .vendor-cart-row-price-input:focus{ outline: none; border-color: var(--holo); }
   .vendor-cart-remove{
     display: flex;
     align-items: center;
@@ -1234,6 +1243,42 @@
   @media (max-width: 400px){
     .vendor-payment-row{ grid-template-columns: repeat(2, 1fr); }
   }
+
+  .vendor-trade-section{
+    margin: 4px 0 20px;
+    padding: 14px;
+    border: 1px solid rgba(167,139,250,0.35);
+    border-radius: 10px;
+    background: var(--sleeve);
+  }
+  .vendor-trade-title{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--holo);
+    margin-bottom: 4px;
+  }
+  .vendor-trade-desc{
+    font-family: 'Open Sans', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .vendor-trade-owed-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .vendor-trade-owed-row span:first-child{ color: var(--text); }
+  .vendor-trade-owed-row.credit span:last-child{ color: var(--profit); }
+  .vendor-trade-owed-row.owe span:last-child{ color: var(--loss); }
+  .vendor-trade-owed-row.even span:last-child{ color: var(--muted); }
 
   .vendor-complete-error{
     display: none;
@@ -4006,7 +4051,7 @@
   </div>
 
   <button type="button" id="start-vendor-mode-btn" class="vendor-mode-btn">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L6 7Z"/><path d="M9 7V6a3 3 0 0 1 6 0v1"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h6M15 12h6"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
     START VENDOR MODE
   </button>
 
@@ -4754,6 +4799,31 @@
           <button type="button" class="vendor-payment-btn" data-method="Zelle">Zelle</button>
           <button type="button" class="vendor-payment-btn" data-method="Venmo">Venmo</button>
           <button type="button" class="vendor-payment-btn" data-method="Trade">Trade</button>
+        </div>
+
+        <div class="vendor-trade-section" id="vendor-trade-section" style="display:none;">
+          <div class="vendor-trade-title">Trade-In Cards</div>
+          <div class="vendor-trade-desc">Search for the card(s) the buyer is offering in trade.</div>
+          <input type="text" id="vendor-trade-search-input" class="search-modal-input" placeholder="Search for a card…">
+          <div id="vendor-trade-search-results" class="vendor-search-results"></div>
+          <div id="vendor-trade-status" class="vendor-scan-status" style="display:none;"></div>
+
+          <div class="vendor-cart" id="vendor-trade-cart">
+            <div class="vendor-cart-empty" id="vendor-trade-cart-empty">No trade-in cards added yet.</div>
+            <div id="vendor-trade-cart-list"></div>
+          </div>
+
+          <div class="vendor-total-row">
+            <span>Trade-In Market Total</span>
+            <span id="vendor-trade-market-total">$0.00</span>
+          </div>
+
+          <div class="vendor-suggest-rows" id="vendor-trade-percent-rows"></div>
+
+          <div class="vendor-trade-owed-row" id="vendor-trade-owed-row">
+            <span id="vendor-trade-owed-label">Total Owed</span>
+            <span id="vendor-trade-owed-value">$0.00</span>
+          </div>
         </div>
 
         <div class="vendor-complete-error" id="vendor-complete-error"></div>
@@ -9329,10 +9399,21 @@
 
   let vendorCart = []; // array of data.active card objects currently in the cart
   let vendorPaymentMethod = null;
+  // Live-editable per-cart-item prices, keyed by card id. Kept separate
+  // from the actual data.active records so adjusting a price here (e.g.
+  // correcting a stale market price on the spot) never touches real
+  // inventory data unless the sale is actually completed.
+  let vendorPriceOverrides = {};
+
+  function getVendorItemPrice(card){
+    const override = vendorPriceOverrides[card.id];
+    return override !== undefined ? override : marketPriceOf(card);
+  }
 
   function openVendorMode(){
     vendorCart = [];
     vendorPaymentMethod = null;
+    vendorPriceOverrides = {};
     document.getElementById('vendor-search-input').value = '';
     document.getElementById('vendor-search-results').innerHTML = '';
     document.getElementById('vendor-scan-status').style.display = 'none';
@@ -9340,6 +9421,7 @@
     document.getElementById('vendor-complete-error').style.display = 'none';
     document.getElementById('vendor-complete-note').textContent = '';
     document.querySelectorAll('.vendor-payment-btn').forEach(b => b.classList.remove('active'));
+    resetVendorTrade();
     renderVendorCart();
     document.getElementById('vendor-mode-overlay').style.display = 'flex';
     setTimeout(() => document.getElementById('vendor-search-input').focus(), 0);
@@ -9427,7 +9509,7 @@
             <div class="vendor-cart-row-meta">${escapeHtml(c.set || 'Unknown set')}${c.number ? ' · #' + escapeHtml(c.number) : ''}</div>
           </div>
           <div class="vendor-cart-row-right">
-            <div class="vendor-cart-row-price">${money(marketPriceOf(c))}</div>
+            <input type="number" step="0.01" min="0" class="vendor-cart-row-price-input" data-id="${c.id}" value="${getVendorItemPrice(c).toFixed(2)}" aria-label="Price">
             <button type="button" class="vendor-cart-remove" data-id="${c.id}" aria-label="Remove">&times;</button>
           </div>
         </div>
@@ -9435,9 +9517,27 @@
       listEl.querySelectorAll('.vendor-cart-remove').forEach(btn => {
         btn.addEventListener('click', () => removeFromVendorCart(btn.dataset.id));
       });
+      listEl.querySelectorAll('.vendor-cart-row-price-input').forEach(input => {
+        input.addEventListener('input', () => {
+          const val = parseFloat(input.value);
+          if (!isNaN(val) && val >= 0){
+            vendorPriceOverrides[input.dataset.id] = val;
+          } else {
+            delete vendorPriceOverrides[input.dataset.id];
+          }
+          renderVendorTotals();
+        });
+      });
     }
 
-    const marketTotal = vendorCart.reduce((sum, c) => sum + marketPriceOf(c), 0);
+    renderVendorTotals();
+  }
+
+  // Split out from renderVendorCart so editing a price live only needs to
+  // recompute totals/suggestions, not re-render (and lose focus on) every
+  // price input in the cart.
+  function renderVendorTotals(){
+    const marketTotal = vendorCart.reduce((sum, c) => sum + getVendorItemPrice(c), 0);
     document.getElementById('vendor-market-total').textContent = money(marketTotal);
 
     const suggestEl = document.getElementById('vendor-suggest-rows');
@@ -9456,12 +9556,192 @@
     } else {
       suggestEl.innerHTML = '';
     }
+
+    renderVendorTradeCalc();
+  }
+
+  // ---- Trade-in calculator ----
+  // Separate from the main cart: these are cards the BUYER is offering,
+  // looked up from the card database (not your inventory), valued at a
+  // percentage of their market total. Total Owed compares that against
+  // what you're giving up (the main cart's total) to work out which way
+  // cash needs to move to balance the trade.
+  let vendorTradeCart = []; // { key, name, number, set, marketPrice }
+  let vendorTradePercent = 70;
+
+  function resetVendorTrade(){
+    vendorTradeCart = [];
+    vendorTradePercent = 70;
+    document.getElementById('vendor-trade-section').style.display = 'none';
+    document.getElementById('vendor-trade-search-input').value = '';
+    document.getElementById('vendor-trade-search-results').innerHTML = '';
+    setVendorTradeStatus('');
+    renderVendorTradeCart();
+  }
+
+  function setVendorTradeStatus(text, isError){
+    const el = document.getElementById('vendor-trade-status');
+    if (!text){
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = 'block';
+    el.textContent = text;
+    el.className = 'vendor-scan-status' + (isError ? ' error' : '');
+  }
+
+  function addToVendorTradeCart(card, source){
+    const price = extractMarketPrice(card);
+    vendorTradeCart.push({
+      key: uid(),
+      name: card.name,
+      number: card.number || '',
+      set: card.set ? card.set.name : '',
+      marketPrice: price !== null ? price : 0
+    });
+    if (price === null){
+      setVendorTradeStatus(`Added "${card.name}" — no market price found from ${source || 'this source'}, entered as $0.00 (edit if needed).`, true);
+    } else {
+      setVendorTradeStatus('');
+    }
+    renderVendorTradeCart();
+  }
+
+  function removeFromVendorTradeCart(key){
+    vendorTradeCart = vendorTradeCart.filter(c => c.key !== key);
+    renderVendorTradeCart();
+  }
+
+  let _vendorTradeSearchTimer = null;
+  document.getElementById('vendor-trade-search-input').addEventListener('input', (e) => {
+    clearTimeout(_vendorTradeSearchTimer);
+    const query = e.target.value.trim();
+    const resultsEl = document.getElementById('vendor-trade-search-results');
+    if (!query){
+      resultsEl.innerHTML = '';
+      return;
+    }
+    resultsEl.innerHTML = `<div class="vendor-scan-status">Searching…</div>`;
+    _vendorTradeSearchTimer = setTimeout(async () => {
+      try{
+        const { entries, error } = await multiSourceCardSearch(query);
+        if (entries.length === 0){
+          resultsEl.innerHTML = `<div class="vendor-scan-status">${error ? 'Search failed — try again.' : 'No cards found.'}</div>`;
+          return;
+        }
+        resultsEl.innerHTML = entries.slice(0, 8).map((entry, i) => {
+          const c = entry.card;
+          const price = extractMarketPrice(c);
+          return `
+            <button type="button" class="vendor-search-result-row" data-index="${i}">
+              <div>
+                <div class="vendor-search-result-name">${escapeHtml(c.name)}</div>
+                <div class="vendor-search-result-meta">${escapeHtml(c.set ? c.set.name : '')}${c.number ? ' · #' + escapeHtml(c.number) : ''}</div>
+              </div>
+              <div class="vendor-search-result-price">${price !== null ? money(price) : '—'}</div>
+            </button>
+          `;
+        }).join('');
+        resultsEl.querySelectorAll('.vendor-search-result-row').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.index, 10);
+            addToVendorTradeCart(entries[idx].card, entries[idx].source);
+            document.getElementById('vendor-trade-search-input').value = '';
+            resultsEl.innerHTML = '';
+          });
+        });
+      } catch(err){
+        console.error('Trade card search failed', err);
+        resultsEl.innerHTML = `<div class="vendor-scan-status">Search failed — try again.</div>`;
+      }
+    }, 300);
+  });
+
+  function renderVendorTradeCart(){
+    const listEl = document.getElementById('vendor-trade-cart-list');
+    const emptyEl = document.getElementById('vendor-trade-cart-empty');
+
+    if (vendorTradeCart.length === 0){
+      emptyEl.style.display = 'block';
+      listEl.innerHTML = '';
+    } else {
+      emptyEl.style.display = 'none';
+      listEl.innerHTML = vendorTradeCart.map(c => `
+        <div class="vendor-cart-row" data-key="${c.key}">
+          <div>
+            <div class="vendor-cart-row-name">${escapeHtml(c.name)}</div>
+            <div class="vendor-cart-row-meta">${escapeHtml(c.set || 'Unknown set')}${c.number ? ' · #' + escapeHtml(c.number) : ''}</div>
+          </div>
+          <div class="vendor-cart-row-right">
+            <input type="number" step="0.01" min="0" class="vendor-cart-row-price-input" data-key="${c.key}" value="${c.marketPrice.toFixed(2)}" aria-label="Price">
+            <button type="button" class="vendor-cart-remove" data-key="${c.key}" aria-label="Remove">&times;</button>
+          </div>
+        </div>
+      `).join('');
+      listEl.querySelectorAll('.vendor-cart-remove').forEach(btn => {
+        btn.addEventListener('click', () => removeFromVendorTradeCart(btn.dataset.key));
+      });
+      listEl.querySelectorAll('.vendor-cart-row-price-input').forEach(input => {
+        input.addEventListener('input', () => {
+          const item = vendorTradeCart.find(c => c.key === input.dataset.key);
+          const val = parseFloat(input.value);
+          if (item) item.marketPrice = isNaN(val) || val < 0 ? 0 : val;
+          renderVendorTradeCalc();
+        });
+      });
+    }
+
+    renderVendorTradeCalc();
+  }
+
+  function renderVendorTradeCalc(){
+    const percentRowsEl = document.getElementById('vendor-trade-percent-rows');
+    if (!percentRowsEl) return; // Trade section not in the DOM yet on first paint
+
+    const tradeMarketTotal = vendorTradeCart.reduce((sum, c) => sum + Number(c.marketPrice || 0), 0);
+    document.getElementById('vendor-trade-market-total').textContent = money(tradeMarketTotal);
+
+    percentRowsEl.innerHTML = [65, 70, 75].map(pct => `
+      <button type="button" class="vendor-suggest-row${pct === vendorTradePercent ? ' active' : ''}" data-pct="${pct}">
+        <span class="vendor-suggest-row-label">${pct}%</span>
+        <span class="vendor-suggest-row-value">${money(tradeMarketTotal * pct / 100)}</span>
+      </button>
+    `).join('');
+    percentRowsEl.querySelectorAll('.vendor-suggest-row').forEach(btn => {
+      btn.addEventListener('click', () => {
+        vendorTradePercent = parseInt(btn.dataset.pct, 10);
+        renderVendorTradeCalc();
+      });
+    });
+
+    const myMarketTotal = vendorCart.reduce((sum, c) => sum + getVendorItemPrice(c), 0);
+    const tradeValue = tradeMarketTotal * (vendorTradePercent / 100);
+    const totalOwed = myMarketTotal - tradeValue;
+
+    const rowEl = document.getElementById('vendor-trade-owed-row');
+    const labelEl = document.getElementById('vendor-trade-owed-label');
+    const valueEl = document.getElementById('vendor-trade-owed-value');
+    if (Math.abs(totalOwed) < 0.005){
+      rowEl.className = 'vendor-trade-owed-row even';
+      labelEl.textContent = 'Even Trade';
+      valueEl.textContent = '$0.00';
+    } else if (totalOwed > 0){
+      rowEl.className = 'vendor-trade-owed-row credit';
+      labelEl.textContent = 'Buyer Owes You';
+      valueEl.textContent = `+ ${money(totalOwed)}`;
+    } else {
+      rowEl.className = 'vendor-trade-owed-row owe';
+      labelEl.textContent = 'You Owe Buyer';
+      valueEl.textContent = `− ${money(Math.abs(totalOwed))}`;
+    }
   }
 
   document.querySelectorAll('.vendor-payment-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       vendorPaymentMethod = btn.dataset.method;
       document.querySelectorAll('.vendor-payment-btn').forEach(b => b.classList.toggle('active', b === btn));
+      document.getElementById('vendor-trade-section').style.display = (vendorPaymentMethod === 'Trade') ? 'block' : 'none';
+      if (vendorPaymentMethod === 'Trade') renderVendorTradeCalc();
     });
   });
 
@@ -9577,23 +9857,23 @@
     errorEl.style.display = 'none';
 
     // Allocate the total sale price across the cart proportionally to
-    // each card's market value, so a bundle discount is spread fairly
-    // rather than every card just eating the full markdown. Falls back
-    // to an even split if none of the cards have a market price to
-    // weight by.
-    const marketTotal = vendorCart.reduce((sum, c) => sum + marketPriceOf(c), 0);
+    // each card's (possibly live-edited) price, so a bundle discount is
+    // spread fairly rather than every card just eating the full markdown.
+    // Falls back to an even split if nothing to weight by.
+    const marketTotal = vendorCart.reduce((sum, c) => sum + getVendorItemPrice(c), 0);
     const dateSold = Date.now();
     const cartIds = new Set(vendorCart.map(c => c.id));
     let allocatedSoFar = 0;
 
     vendorCart.forEach((card, i) => {
+      const itemPrice = getVendorItemPrice(card);
       let allocated;
       if (i === vendorCart.length - 1){
         // Last item takes the remainder so the split sums exactly to the
         // entered sale price despite any rounding along the way.
         allocated = totalSalePrice - allocatedSoFar;
       } else if (marketTotal > 0){
-        allocated = totalSalePrice * (marketPriceOf(card) / marketTotal);
+        allocated = totalSalePrice * (itemPrice / marketTotal);
       } else {
         allocated = totalSalePrice / vendorCart.length;
       }
@@ -9607,7 +9887,7 @@
         set: card.set || '',
         rarity: card.rarity || '',
         cost: card.price,
-        marketPrice: card.marketPrice,
+        marketPrice: itemPrice,
         condition: card.condition,
         gradedCompany: card.gradedCompany,
         grade: card.grade,
@@ -9630,8 +9910,10 @@
 
     vendorCart = [];
     vendorPaymentMethod = null;
+    vendorPriceOverrides = {};
     document.getElementById('vendor-sale-price').value = '';
     document.querySelectorAll('.vendor-payment-btn').forEach(b => b.classList.remove('active'));
+    resetVendorTrade();
     renderVendorCart();
   });
 
