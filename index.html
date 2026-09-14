@@ -9328,7 +9328,7 @@
   });
 
   document.addEventListener('click', (e) => {
-    if (e.target.closest('.card-tile.inactive')) return;
+    if (e.target.closest('.card-tile.inactive-tile')) return;
     document.querySelectorAll('.override-panel.open').forEach(p => p.classList.remove('open'));
   });
 
