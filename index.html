@@ -1385,22 +1385,34 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 26px 16px;
-    background: var(--sleeve);
-    border: 1px dashed var(--line);
-    border-radius: var(--radius);
+    gap: 10px;
+    width: auto;
+    background: none;
+    border: none;
+    padding: 0;
     color: var(--muted);
     cursor: pointer;
-    margin-bottom: 26px;
+    margin: 8px auto 26px;
   }
-  .add-card-box:hover{ border-color: var(--gold); color: var(--gold); }
-  .add-card-box .plus-icon{ width: 30px; height: 30px; }
+  .add-card-box .add-card-circle{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--sleeve);
+    border: 1px solid var(--line);
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  }
+  .add-card-box:hover .add-card-circle{ border-color: var(--gold); background: var(--sleeve-2); }
+  .add-card-box:active .add-card-circle{ transform: scale(0.94); }
+  .add-card-box:hover{ color: var(--gold); }
+  .add-card-box .plus-icon{ width: 24px; height: 24px; color: var(--gold); }
   .add-card-box .add-card-label{
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .add-menu-options{
@@ -3402,7 +3414,9 @@
   </div>
 
   <button type="button" id="add-card-box" class="add-card-box" aria-label="Add a card">
-    <svg class="plus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span class="add-card-circle">
+      <svg class="plus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </span>
     <span class="add-card-label">Add a Card</span>
   </button>
 
@@ -3649,7 +3663,9 @@
     <div class="dash-welcome">Schedule <span id="schedule-count-label" style="color:var(--muted); font-size:14px;"></span></div>
 
     <button type="button" id="add-show-box" class="add-card-box" aria-label="Add a show">
-      <svg class="plus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span class="add-card-circle">
+        <svg class="plus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </span>
       <span class="add-card-label">Add a Show</span>
     </button>
 
