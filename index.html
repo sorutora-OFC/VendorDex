@@ -3467,10 +3467,6 @@
           </select>
         </div>
       </div>
-      <div class="export-group">
-        <button type="button" id="active-export-csv" class="export-btn">Export CSV</button>
-        <button type="button" id="active-export-pdf" class="export-btn">Export PDF</button>
-      </div>
     </div>
     <div class="grid" id="active-grid" style="display:none;"></div>
     <div class="list-table-scroll">
@@ -3816,6 +3812,15 @@
           <input type="file" id="backup-import-input" accept="application/json,.json" style="display:none;">
         </div>
         <div class="backup-note" id="backup-note"></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Export Inventory</div>
+      <div class="settings-section-desc">Download your Active inventory as a spreadsheet or PDF — handy for insurance records, consignment, or sharing with a partner.</div>
+      <div class="backup-actions">
+        <button type="button" id="settings-active-export-csv" class="backup-btn backup-btn-secondary">Export CSV</button>
+        <button type="button" id="settings-active-export-pdf" class="backup-btn backup-btn-secondary">Export PDF</button>
       </div>
     </div>
 
@@ -6455,11 +6460,11 @@
     return { headers, rows };
   }
 
-  document.getElementById('active-export-csv').addEventListener('click', () => {
+  document.getElementById('settings-active-export-csv').addEventListener('click', () => {
     const { headers, rows } = buildActiveExportData();
     downloadCSV('vendordex-active-inventory.csv', headers, rows);
   });
-  document.getElementById('active-export-pdf').addEventListener('click', () => {
+  document.getElementById('settings-active-export-pdf').addEventListener('click', () => {
     const { headers, rows } = buildActiveExportData();
     downloadPDF('VendorDEX — Active Inventory', headers, rows, 'vendordex-active-inventory.pdf');
   });
