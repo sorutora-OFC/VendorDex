@@ -973,6 +973,296 @@
     max-height: 50vh;
     overflow-y: auto;
   }
+
+  /* ---------- Vendor Mode ---------- */
+  .vendor-mode-btn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    width: 100%;
+    padding: 15px 16px;
+    margin: 4px 0 22px;
+    background: linear-gradient(135deg, var(--gold), var(--holo));
+    border: none;
+    border-radius: 12px;
+    color: var(--ink);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .vendor-mode-btn:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -8px rgba(167,139,250,0.55);
+  }
+  .vendor-mode-btn svg{ width: 18px; height: 18px; }
+
+  .vendor-add-row{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .vendor-add-row .search-modal-input{ margin-bottom: 0; flex: 1; }
+  .vendor-scan-btn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    background: var(--sleeve);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--holo);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .vendor-scan-btn:hover{ border-color: var(--holo); }
+  .vendor-scan-btn svg{ width: 19px; height: 19px; }
+
+  .vendor-search-results{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .vendor-search-results:empty{ margin-bottom: 0; }
+  .vendor-search-result-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    background: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 12px;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'Open Sans', sans-serif;
+    transition: border-color 0.15s ease;
+  }
+  .vendor-search-result-row:hover{ border-color: var(--gold); }
+  .vendor-search-result-name{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .vendor-search-result-meta{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .vendor-search-result-price{
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--holo);
+    flex-shrink: 0;
+  }
+  .vendor-scan-status{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--muted);
+    padding: 8px 2px;
+  }
+  .vendor-scan-status.error{ color: var(--loss); }
+
+  .vendor-cart{
+    margin: 14px 0;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+  }
+  .vendor-cart-empty{
+    text-align: center;
+    color: var(--muted);
+    font-size: 12.5px;
+    padding: 18px 10px;
+  }
+  .vendor-cart-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .vendor-cart-row:last-child{ border-bottom: none; }
+  .vendor-cart-row-name{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--text);
+  }
+  .vendor-cart-row-meta{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .vendor-cart-row-right{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .vendor-cart-row-price{
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--text);
+  }
+  .vendor-cart-remove{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--sleeve);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+  }
+  .vendor-cart-remove:hover{ border-color: var(--loss); color: var(--loss); }
+
+  .vendor-total-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+    margin-top: 4px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+  }
+  .vendor-total-row span:last-child{
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--gold);
+    text-shadow: 0 0 12px currentColor;
+  }
+
+  .vendor-suggest-rows{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+  .vendor-suggest-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 12px;
+    background: var(--sleeve);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .vendor-suggest-row:hover{ border-color: var(--holo); }
+  .vendor-suggest-row-label{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .vendor-suggest-row-value{
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--holo);
+  }
+
+  .vendor-sale-field{ margin-bottom: 16px; }
+  .vendor-sale-field label{
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .vendor-sale-field input{
+    width: 100%;
+    background: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .vendor-sale-field input:focus{ outline: none; border-color: var(--gold); }
+
+  .vendor-payment-row{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .vendor-payment-btn{
+    padding: 10px 6px;
+    background: var(--sleeve);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .vendor-payment-btn:hover{ border-color: var(--holo); color: var(--text); }
+  .vendor-payment-btn.active{
+    background: linear-gradient(135deg, var(--gold), var(--holo));
+    border-color: transparent;
+    color: var(--ink);
+  }
+  @media (max-width: 400px){
+    .vendor-payment-row{ grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .vendor-complete-error{
+    display: none;
+    color: var(--loss);
+    font-size: 12.5px;
+    margin-bottom: 10px;
+  }
+  .vendor-complete-btn{
+    width: 100%;
+    padding: 15px;
+    background: var(--profit);
+    border: none;
+    border-radius: 10px;
+    color: var(--ink);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: filter 0.15s ease;
+  }
+  .vendor-complete-btn:hover{ filter: brightness(1.08); }
+  .vendor-complete-note{
+    text-align: center;
+    font-size: 12.5px;
+    margin-top: 10px;
+    min-height: 1em;
+  }
+  .vendor-complete-note.success{ color: var(--profit); }
   .search-result-row{
     display: flex;
     align-items: center;
@@ -1232,6 +1522,70 @@
   .stat.profit{ color: var(--profit); }
   .stat.stock{ color: var(--holo); }
   .stat.sold{ color: var(--muted); }
+
+  .stat-marker{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    margin-top: 5px;
+    white-space: nowrap;
+  }
+  .stat-marker.positive{ color: var(--profit); }
+  .stat-marker.negative{ color: var(--loss); }
+  .stat-marker.attention{ color: var(--loss); }
+  .stat-marker.neutral{ color: var(--muted); }
+
+  .stat-info-wrap{
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 5px;
+    vertical-align: middle;
+  }
+  .stat-info-icon{
+    width: 12px;
+    height: 12px;
+    color: var(--muted);
+    cursor: help;
+  }
+  .stat-info-wrap:hover .stat-info-icon{ color: var(--holo); }
+  .stat-info-popup{
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 9px;
+    width: 200px;
+    background: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 11px 13px;
+    box-shadow: 0 8px 20px -6px rgba(0,0,0,0.6);
+    z-index: 20;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  .stat-info-wrap:hover .stat-info-popup{ display: block; }
+  .stat-info-popup-title{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 11.5px;
+    color: var(--text);
+    margin-bottom: 7px;
+  }
+  .stat-info-popup-row{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text);
+    padding: 3px 0;
+  }
 
   @media (max-width: 640px){
     .scoreboard{ grid-template-columns: repeat(2, 1fr); }
@@ -3560,14 +3914,28 @@
       <div class="stat gross">
         <div class="label">Gross Inventory (Market)</div>
         <div class="value" id="dash-stat-gross">$0.00</div>
+        <div class="stat-marker" id="dash-stat-gross-marker"></div>
       </div>
       <div class="stat stock">
-        <div class="label">In Stock</div>
+        <div class="label">
+          In Stock
+          <span class="stat-info-wrap">
+            <svg class="stat-info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="11"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <div class="stat-info-popup">
+              <div class="stat-info-popup-title">Inventory Health</div>
+              <div class="stat-info-popup-row" id="dash-health-row-red"></div>
+              <div class="stat-info-popup-row" id="dash-health-row-yellow"></div>
+              <div class="stat-info-popup-row" id="dash-health-row-green"></div>
+            </div>
+          </span>
+        </div>
         <div class="value" id="dash-stat-stock">0</div>
+        <div class="stat-marker" id="dash-stat-stock-marker"></div>
       </div>
       <div class="stat profit" id="dash-stat-profit-box">
         <div class="label" id="dash-month-label">Profit This Month</div>
         <div class="value" id="dash-stat-monthprofit">$0.00</div>
+        <div class="stat-marker" id="dash-stat-profit-marker"></div>
       </div>
     </div>
     <div class="perf-section">
@@ -3636,6 +4004,11 @@
     <div class="analytics-title">Top 3 Sales</div>
     <div class="analytics-grid" id="analytics-grid"></div>
   </div>
+
+  <button type="button" id="start-vendor-mode-btn" class="vendor-mode-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L6 7Z"/><path d="M9 7V6a3 3 0 0 1 6 0v1"/></svg>
+    START VENDOR MODE
+  </button>
 
   <button type="button" id="add-card-box" class="add-card-box" aria-label="Add a card">
     <span class="add-card-circle">
@@ -4342,6 +4715,54 @@
     </div>
   </div>
 
+  <div id="vendor-mode-overlay" class="scan-modal-overlay" style="display:none;">
+    <div class="scan-modal">
+      <div class="scan-modal-header">
+        <div class="scan-modal-title">SALE</div>
+        <button type="button" id="vendor-mode-close" class="scan-modal-close">&times;</button>
+      </div>
+      <div class="scan-modal-body">
+        <div class="vendor-add-row">
+          <input type="text" id="vendor-search-input" class="search-modal-input" placeholder="Search your inventory…">
+          <button type="button" id="vendor-scan-btn" aria-label="Scan a card" class="vendor-scan-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5 7.5 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.5L15 3.5H9Z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          </button>
+          <input type="file" id="vendor-scan-file-input" accept="image/*" capture="environment" style="display:none;">
+        </div>
+        <div id="vendor-scan-status" class="vendor-scan-status" style="display:none;"></div>
+        <div id="vendor-search-results" class="vendor-search-results"></div>
+
+        <div class="vendor-cart" id="vendor-cart">
+          <div class="vendor-cart-empty" id="vendor-cart-empty">No cards added yet — search or scan to start a sale.</div>
+          <div id="vendor-cart-list"></div>
+        </div>
+
+        <div class="vendor-total-row">
+          <span>Market Total</span>
+          <span id="vendor-market-total">$0.00</span>
+        </div>
+
+        <div class="vendor-suggest-rows" id="vendor-suggest-rows"></div>
+
+        <div class="vendor-sale-field">
+          <label for="vendor-sale-price">Sale Price ($)</label>
+          <input type="number" step="0.01" min="0" id="vendor-sale-price" placeholder="0.00">
+        </div>
+
+        <div class="vendor-payment-row" id="vendor-payment-row">
+          <button type="button" class="vendor-payment-btn" data-method="Cash">Cash</button>
+          <button type="button" class="vendor-payment-btn" data-method="Zelle">Zelle</button>
+          <button type="button" class="vendor-payment-btn" data-method="Venmo">Venmo</button>
+          <button type="button" class="vendor-payment-btn" data-method="Trade">Trade</button>
+        </div>
+
+        <div class="vendor-complete-error" id="vendor-complete-error"></div>
+        <button type="button" id="vendor-complete-btn" class="vendor-complete-btn">COMPLETE SALE</button>
+        <div class="vendor-complete-note" id="vendor-complete-note"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="search-cards-modal-overlay" class="scan-modal-overlay" style="display:none;">
     <div class="scan-modal">
       <div class="scan-modal-header">
@@ -4584,7 +5005,7 @@
     ? window.storage
     : (window.__BINDER_FORCE_BRIDGE__ ? bridgeStorageApi : indexedDbStorageApi);
 
-  let data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, dataVersion: 1 };
+  let data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, grossHistory: [], dataVersion: 1 };
   let currentTab = 'active';
   let sortMode = 'recent';
   let allInventorySortMode = 'name';
@@ -4856,13 +5277,14 @@
         // both stay blank/null until set in Settings, per-account.
         data.storeName = typeof parsed.storeName === 'string' ? parsed.storeName : '';
         data.profilePhoto = parsed.profilePhoto || null;
+        data.grossHistory = Array.isArray(parsed.grossHistory) ? parsed.grossHistory : [];
         data.dataVersion = parsed.dataVersion;
       }
     } catch(e){
       // No row for this user yet (first time logging in) — start fresh.
       // The first saveData() call will create it.
       console.error('Could not load inventory from Supabase', e);
-      data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, dataVersion: CURRENT_DATA_VERSION };
+      data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, grossHistory: [], dataVersion: CURRENT_DATA_VERSION };
     }
     applyProfilePhotoToUI();
     document.getElementById('loading-msg').style.display = 'none';
@@ -4903,19 +5325,124 @@
     document.getElementById('tab-inactive-count').textContent = `(${data.sold.length})`;
   }
 
+  function dateStrFromTimestamp(ts){
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  // Records today's gross inventory value once per day, so the Dashboard
+  // can show a real net-change figure instead of a same-day approximation.
+  // Cheap to call on every render — it's a no-op after the first render
+  // of the day. Keeps at most ~2 years of daily entries.
+  const GROSS_HISTORY_MAX_ENTRIES = 730;
+  function recordGrossSnapshotIfNeeded(gross){
+    const today = todayDateStr();
+    if (!Array.isArray(data.grossHistory)) data.grossHistory = [];
+    const last = data.grossHistory[data.grossHistory.length - 1];
+    if (last && last.date === today){
+      // Already snapshotted today — keep it current in case gross moved
+      // since this morning, but don't create a second entry for today.
+      if (last.gross !== gross){
+        last.gross = gross;
+        saveData();
+      }
+      return;
+    }
+    data.grossHistory.push({ date: today, gross });
+    if (data.grossHistory.length > GROSS_HISTORY_MAX_ENTRIES){
+      data.grossHistory.splice(0, data.grossHistory.length - GROSS_HISTORY_MAX_ENTRIES);
+    }
+    saveData();
+  }
+
+  // grossHistory is appended in chronological order, so the last entry
+  // with a date before dateStr is the most recent snapshot taken before
+  // that point in time.
+  function findGrossSnapshotBefore(dateStr){
+    if (!Array.isArray(data.grossHistory)) return null;
+    let found = null;
+    for (const entry of data.grossHistory){
+      if (entry.date < dateStr) found = entry;
+      else break;
+    }
+    return found;
+  }
+
   function renderDashboard(){
     const gross = data.active.reduce((sum, c) => sum + marketPriceOf(c), 0);
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const monthlyProfit = data.sold
-      .filter(c => (c.reason || 'SOLD') === 'SOLD' && c.dateSold >= monthStart)
-      .reduce((sum, c) => sum + Number(c.profit || 0), 0);
+    const monthlySold = data.sold.filter(c => (c.reason || 'SOLD') === 'SOLD' && c.dateSold >= monthStart);
+    const monthlyProfit = monthlySold.reduce((sum, c) => sum + Number(c.profit || 0), 0);
 
     document.getElementById('dash-stat-gross').textContent = money(gross);
     document.getElementById('dash-stat-stock').textContent = data.active.length;
     document.getElementById('dash-stat-monthprofit').textContent = money(monthlyProfit);
     document.getElementById('dash-month-label').textContent = `Profit This Month (${now.toLocaleString(undefined, { month: 'long' })})`;
     document.getElementById('dash-stat-profit-box').classList.toggle('negative', monthlyProfit < 0);
+
+    // ---- Gross Inventory marker: true net change since the start of the
+    // month, using daily snapshots recorded in data.grossHistory. Falls
+    // back to "value added this month" only until enough snapshot history
+    // exists (e.g. the first month after this feature was added). ----
+    recordGrossSnapshotIfNeeded(gross);
+    const grossMarkerEl = document.getElementById('dash-stat-gross-marker');
+    const monthStartStr = dateStrFromTimestamp(monthStart);
+    const snapshotBeforeMonth = findGrossSnapshotBefore(monthStartStr);
+    if (snapshotBeforeMonth){
+      const netChange = gross - snapshotBeforeMonth.gross;
+      if (netChange !== 0){
+        const arrow = netChange >= 0 ? '▲' : '▼';
+        grossMarkerEl.textContent = `${arrow} ${money(Math.abs(netChange))} this month`;
+        grossMarkerEl.className = 'stat-marker ' + (netChange >= 0 ? 'positive' : 'negative');
+      } else {
+        grossMarkerEl.textContent = '';
+      }
+    } else {
+      // Not enough snapshot history yet (e.g. this is the first month
+      // tracking has run) — show value added as a reasonable stand-in.
+      const grossAddedThisMonth = data.active
+        .filter(c => c.dateAdded >= monthStart)
+        .reduce((sum, c) => sum + marketPriceOf(c), 0);
+      if (grossAddedThisMonth > 0){
+        grossMarkerEl.textContent = `▲ ${money(grossAddedThisMonth)} this month`;
+        grossMarkerEl.className = 'stat-marker positive';
+      } else {
+        grossMarkerEl.textContent = '';
+      }
+    }
+
+    // ---- Profit marker: margin (profit / revenue) on this month's sales ----
+    const monthlyRevenue = monthlySold.reduce((sum, c) => sum + Number(c.salePrice || 0), 0);
+    const profitMarkerEl = document.getElementById('dash-stat-profit-marker');
+    if (monthlyRevenue > 0){
+      const marginPct = (monthlyProfit / monthlyRevenue) * 100;
+      const arrow = marginPct >= 0 ? '▲' : '▼';
+      profitMarkerEl.textContent = `${arrow} ${Math.abs(marginPct).toFixed(0)}% margin`;
+      profitMarkerEl.className = 'stat-marker ' + (marginPct >= 0 ? 'positive' : 'negative');
+    } else {
+      profitMarkerEl.textContent = '';
+    }
+
+    // ---- In Stock marker + hover health breakdown, by age tier ----
+    let redCount = 0, yellowCount = 0, greenCount = 0;
+    data.active.forEach(c => {
+      const age = getAgeTier(c.dateAdded);
+      if (!age) { greenCount++; return; }
+      if (age.tier === 'liquidate') redCount++;
+      else if (age.tier === 'move') yellowCount++;
+      else greenCount++;
+    });
+    const stockMarkerEl = document.getElementById('dash-stat-stock-marker');
+    if (redCount > 0){
+      stockMarkerEl.textContent = `🔴 ${redCount} need attention`;
+      stockMarkerEl.className = 'stat-marker attention';
+    } else {
+      stockMarkerEl.textContent = '';
+    }
+    document.getElementById('dash-health-row-red').textContent = `🔴 ${redCount} cards held 90+ days`;
+    document.getElementById('dash-health-row-yellow').textContent = `🟡 ${yellowCount} cards held 60+ days`;
+    document.getElementById('dash-health-row-green').textContent = `🟢 ${greenCount} cards <60 days`;
 
     renderNextShowCard();
     renderLiquidateCard();
@@ -6586,6 +7113,7 @@
             data.giveaways = Array.isArray(parsed.giveaways) ? parsed.giveaways : [];
             data.storeName = typeof parsed.storeName === 'string' ? parsed.storeName : data.storeName;
             data.profilePhoto = parsed.profilePhoto || data.profilePhoto;
+            data.grossHistory = Array.isArray(parsed.grossHistory) ? parsed.grossHistory : [];
             data.dataVersion = parsed.dataVersion;
             await saveData();
             applyProfilePhotoToUI();
@@ -8789,6 +9317,322 @@
   document.getElementById('scan-modal-close').addEventListener('click', closeScanModal);
   document.getElementById('scan-modal-overlay').addEventListener('click', (e) => {
     if (e.target.id === 'scan-modal-overlay') closeScanModal();
+  });
+
+  // ---------- Vendor Mode ----------
+  // A checkout-style flow for selling multiple cards from Active
+  // inventory in one pass at a table/show: build a cart, see a market
+  // total and quick discount reference points, enter what the sale
+  // actually went for, and complete it — which allocates that price
+  // across the cards proportionally to their market value, moves each
+  // into Sold with the right profit, and stays open for the next sale.
+
+  let vendorCart = []; // array of data.active card objects currently in the cart
+  let vendorPaymentMethod = null;
+
+  function openVendorMode(){
+    vendorCart = [];
+    vendorPaymentMethod = null;
+    document.getElementById('vendor-search-input').value = '';
+    document.getElementById('vendor-search-results').innerHTML = '';
+    document.getElementById('vendor-scan-status').style.display = 'none';
+    document.getElementById('vendor-sale-price').value = '';
+    document.getElementById('vendor-complete-error').style.display = 'none';
+    document.getElementById('vendor-complete-note').textContent = '';
+    document.querySelectorAll('.vendor-payment-btn').forEach(b => b.classList.remove('active'));
+    renderVendorCart();
+    document.getElementById('vendor-mode-overlay').style.display = 'flex';
+    setTimeout(() => document.getElementById('vendor-search-input').focus(), 0);
+  }
+
+  function closeVendorMode(){
+    document.getElementById('vendor-mode-overlay').style.display = 'none';
+  }
+
+  document.getElementById('start-vendor-mode-btn').addEventListener('click', openVendorMode);
+  document.getElementById('vendor-mode-close').addEventListener('click', closeVendorMode);
+  document.getElementById('vendor-mode-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'vendor-mode-overlay') closeVendorMode();
+  });
+
+  function renderVendorSearchResults(query){
+    const resultsEl = document.getElementById('vendor-search-results');
+    if (!query){
+      resultsEl.innerHTML = '';
+      return;
+    }
+    const q = query.toLowerCase();
+    const cartIds = new Set(vendorCart.map(c => c.id));
+    const matches = data.active
+      .filter(c => !cartIds.has(c.id) && c.name.toLowerCase().includes(q))
+      .slice(0, 8);
+
+    if (matches.length === 0){
+      resultsEl.innerHTML = `<div class="vendor-scan-status">No matching active inventory found.</div>`;
+      return;
+    }
+
+    resultsEl.innerHTML = matches.map(c => `
+      <button type="button" class="vendor-search-result-row" data-id="${c.id}">
+        <div>
+          <div class="vendor-search-result-name">${escapeHtml(c.name)}</div>
+          <div class="vendor-search-result-meta">${escapeHtml(c.set || 'Unknown set')}${c.number ? ' · #' + escapeHtml(c.number) : ''}</div>
+        </div>
+        <div class="vendor-search-result-price">${money(marketPriceOf(c))}</div>
+      </button>
+    `).join('');
+
+    resultsEl.querySelectorAll('.vendor-search-result-row').forEach(btn => {
+      btn.addEventListener('click', () => {
+        addToVendorCart(btn.dataset.id);
+        document.getElementById('vendor-search-input').value = '';
+        resultsEl.innerHTML = '';
+      });
+    });
+  }
+
+  let _vendorSearchTimer = null;
+  document.getElementById('vendor-search-input').addEventListener('input', (e) => {
+    clearTimeout(_vendorSearchTimer);
+    const query = e.target.value.trim();
+    _vendorSearchTimer = setTimeout(() => renderVendorSearchResults(query), 150);
+  });
+
+  function addToVendorCart(id){
+    if (vendorCart.some(c => c.id === id)) return;
+    const card = data.active.find(c => c.id === id);
+    if (!card) return;
+    vendorCart.push(card);
+    renderVendorCart();
+  }
+
+  function removeFromVendorCart(id){
+    vendorCart = vendorCart.filter(c => c.id !== id);
+    renderVendorCart();
+  }
+
+  function renderVendorCart(){
+    const listEl = document.getElementById('vendor-cart-list');
+    const emptyEl = document.getElementById('vendor-cart-empty');
+
+    if (vendorCart.length === 0){
+      emptyEl.style.display = 'block';
+      listEl.innerHTML = '';
+    } else {
+      emptyEl.style.display = 'none';
+      listEl.innerHTML = vendorCart.map(c => `
+        <div class="vendor-cart-row" data-id="${c.id}">
+          <div>
+            <div class="vendor-cart-row-name">${escapeHtml(c.name)}</div>
+            <div class="vendor-cart-row-meta">${escapeHtml(c.set || 'Unknown set')}${c.number ? ' · #' + escapeHtml(c.number) : ''}</div>
+          </div>
+          <div class="vendor-cart-row-right">
+            <div class="vendor-cart-row-price">${money(marketPriceOf(c))}</div>
+            <button type="button" class="vendor-cart-remove" data-id="${c.id}" aria-label="Remove">&times;</button>
+          </div>
+        </div>
+      `).join('');
+      listEl.querySelectorAll('.vendor-cart-remove').forEach(btn => {
+        btn.addEventListener('click', () => removeFromVendorCart(btn.dataset.id));
+      });
+    }
+
+    const marketTotal = vendorCart.reduce((sum, c) => sum + marketPriceOf(c), 0);
+    document.getElementById('vendor-market-total').textContent = money(marketTotal);
+
+    const suggestEl = document.getElementById('vendor-suggest-rows');
+    if (marketTotal > 0){
+      suggestEl.innerHTML = [85, 90, 95].map(pct => `
+        <button type="button" class="vendor-suggest-row" data-price="${(marketTotal * pct / 100).toFixed(2)}">
+          <span class="vendor-suggest-row-label">${pct}%</span>
+          <span class="vendor-suggest-row-value">${money(marketTotal * pct / 100)}</span>
+        </button>
+      `).join('');
+      suggestEl.querySelectorAll('.vendor-suggest-row').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('vendor-sale-price').value = btn.dataset.price;
+        });
+      });
+    } else {
+      suggestEl.innerHTML = '';
+    }
+  }
+
+  document.querySelectorAll('.vendor-payment-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      vendorPaymentMethod = btn.dataset.method;
+      document.querySelectorAll('.vendor-payment-btn').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+
+  // ---- Scan to add: reuses the same OCR pipeline as the main Scan Card
+  // feature, but matches the result against Active inventory instead of
+  // looking it up externally — this is about selling what you already
+  // have, not identifying a new card.
+  document.getElementById('vendor-scan-btn').addEventListener('click', () => {
+    document.getElementById('vendor-scan-file-input').click();
+  });
+
+  document.getElementById('vendor-scan-file-input').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    runVendorScan(file);
+  });
+
+  function setVendorScanStatus(text, isError){
+    const el = document.getElementById('vendor-scan-status');
+    if (!text){
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = 'block';
+    el.textContent = text;
+    el.className = 'vendor-scan-status' + (isError ? ' error' : '');
+  }
+
+  async function runVendorScan(file){
+    setVendorScanStatus('Reading card…');
+    try{
+      if (!window.Tesseract) throw new Error('OCR library did not load');
+      const img = await loadImageFromFile(file);
+
+      let parsed = null;
+      for (const pass of SCAN_OCR_PASSES){
+        const cropSrc = cropAndScale(img, pass.xR, pass.yR, pass.wR, pass.hR, pass.scale);
+        const text = await ocrText(cropSrc, pass.whitelist);
+        parsed = extractNumberTotal(text);
+        if (parsed) break;
+      }
+
+      if (!parsed){
+        setVendorScanStatus('Could not read a card number — try a clearer photo, or search by name instead.', true);
+        return;
+      }
+
+      const cartIds = new Set(vendorCart.map(c => c.id));
+      const cleanNumber = parsed.number.replace(/^0+/, '') || parsed.number;
+      const matches = data.active.filter(c => {
+        if (cartIds.has(c.id) || !c.number) return false;
+        const cNum = String(c.number).replace(/^0+/, '') || String(c.number);
+        return cNum === cleanNumber || cNum === parsed.number;
+      });
+
+      if (matches.length === 0){
+        setVendorScanStatus(`No active card matching #${parsed.number} — try search instead.`, true);
+        return;
+      }
+      if (matches.length === 1){
+        addToVendorCart(matches[0].id);
+        setVendorScanStatus(`Added "${matches[0].name}" (#${parsed.number}).`);
+      } else {
+        // More than one active card shares this number (different sets) —
+        // show them as quick-add results instead of guessing.
+        const resultsEl = document.getElementById('vendor-search-results');
+        resultsEl.innerHTML = matches.map(c => `
+          <button type="button" class="vendor-search-result-row" data-id="${c.id}">
+            <div>
+              <div class="vendor-search-result-name">${escapeHtml(c.name)}</div>
+              <div class="vendor-search-result-meta">${escapeHtml(c.set || 'Unknown set')}${c.number ? ' · #' + escapeHtml(c.number) : ''}</div>
+            </div>
+            <div class="vendor-search-result-price">${money(marketPriceOf(c))}</div>
+          </button>
+        `).join('');
+        resultsEl.querySelectorAll('.vendor-search-result-row').forEach(btn => {
+          btn.addEventListener('click', () => {
+            addToVendorCart(btn.dataset.id);
+            resultsEl.innerHTML = '';
+          });
+        });
+        setVendorScanStatus(`Found ${matches.length} active cards numbered #${parsed.number} — pick one below.`);
+      }
+    } catch(err){
+      console.error('Vendor scan failed', err);
+      setVendorScanStatus(`Scan failed: ${describeError(err)}. Try again or search by name.`, true);
+    }
+  }
+
+  document.getElementById('vendor-complete-btn').addEventListener('click', () => {
+    const errorEl = document.getElementById('vendor-complete-error');
+    const noteEl = document.getElementById('vendor-complete-note');
+    noteEl.textContent = '';
+
+    if (vendorCart.length === 0){
+      errorEl.textContent = 'Add at least one card to the sale first.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    const salePriceVal = document.getElementById('vendor-sale-price').value;
+    const totalSalePrice = parseFloat(salePriceVal);
+    if (salePriceVal === '' || isNaN(totalSalePrice) || totalSalePrice < 0){
+      errorEl.textContent = 'Enter the total sale price.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (!vendorPaymentMethod){
+      errorEl.textContent = 'Select a payment method.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    errorEl.style.display = 'none';
+
+    // Allocate the total sale price across the cart proportionally to
+    // each card's market value, so a bundle discount is spread fairly
+    // rather than every card just eating the full markdown. Falls back
+    // to an even split if none of the cards have a market price to
+    // weight by.
+    const marketTotal = vendorCart.reduce((sum, c) => sum + marketPriceOf(c), 0);
+    const dateSold = Date.now();
+    const cartIds = new Set(vendorCart.map(c => c.id));
+    let allocatedSoFar = 0;
+
+    vendorCart.forEach((card, i) => {
+      let allocated;
+      if (i === vendorCart.length - 1){
+        // Last item takes the remainder so the split sums exactly to the
+        // entered sale price despite any rounding along the way.
+        allocated = totalSalePrice - allocatedSoFar;
+      } else if (marketTotal > 0){
+        allocated = totalSalePrice * (marketPriceOf(card) / marketTotal);
+      } else {
+        allocated = totalSalePrice / vendorCart.length;
+      }
+      allocated = Math.round(allocated * 100) / 100;
+      allocatedSoFar += allocated;
+
+      data.sold.push({
+        id: card.id,
+        name: card.name,
+        number: card.number || '',
+        set: card.set || '',
+        rarity: card.rarity || '',
+        cost: card.price,
+        marketPrice: card.marketPrice,
+        condition: card.condition,
+        gradedCompany: card.gradedCompany,
+        grade: card.grade,
+        photo: card.photo || null,
+        dateAdded: card.dateAdded,
+        dateSold,
+        reason: 'SOLD',
+        salePrice: allocated,
+        profit: allocated - Number(card.price || 0),
+        paymentMethod: vendorPaymentMethod
+      });
+    });
+
+    data.active = data.active.filter(c => !cartIds.has(c.id));
+    saveData();
+    render();
+
+    noteEl.textContent = `Sale recorded — ${vendorCart.length} card${vendorCart.length === 1 ? '' : 's'} for ${money(totalSalePrice)} via ${vendorPaymentMethod}.`;
+    noteEl.className = 'vendor-complete-note success';
+
+    vendorCart = [];
+    vendorPaymentMethod = null;
+    document.getElementById('vendor-sale-price').value = '';
+    document.querySelectorAll('.vendor-payment-btn').forEach(b => b.classList.remove('active'));
+    renderVendorCart();
   });
 
   function addCard(){
