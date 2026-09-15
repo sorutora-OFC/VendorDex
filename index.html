@@ -2907,6 +2907,131 @@
     margin-bottom: 14px;
   }
 
+  /* ---------- Transactions list + detail modal ---------- */
+  .transaction-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: var(--sleeve);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 13px 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s ease;
+  }
+  .transaction-row:hover{ border-color: var(--holo); }
+  .transaction-row-title{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .transaction-row-meta{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+  .transaction-row-amount{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--profit);
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+
+  .transaction-detail-meta{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .transaction-detail-method{
+    display: inline-block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--holo);
+    background: rgba(167,139,250,0.1);
+    border: 1px solid rgba(167,139,250,0.3);
+    border-radius: 999px;
+    padding: 3px 12px;
+    margin: 8px 0 18px;
+  }
+  .transaction-detail-section-title{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 16px 0 8px;
+  }
+  .transaction-detail-cards{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .transaction-detail-card-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 12px;
+  }
+  .transaction-detail-card-name{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .transaction-detail-card-meta{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .transaction-detail-card-price{
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text);
+    flex-shrink: 0;
+    margin-left: 10px;
+  }
+  .transaction-detail-total-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .transaction-detail-net-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .transaction-detail-net-row span:first-child{ color: var(--text); }
+  .transaction-detail-net-row.credit span:last-child{ color: var(--profit); }
+  .transaction-detail-net-row.owe span:last-child{ color: var(--loss); }
+  .transaction-detail-net-row.even span:last-child{ color: var(--muted); }
+
   /* ---------- View toggle ---------- */
   .view-toggle{
     display: inline-flex;
@@ -4064,8 +4189,7 @@
 
   <div class="tabs">
     <button class="tab active" data-tab="active">Active <span class="count" id="tab-active-count">(0)</span></button>
-    <button class="tab" data-tab="inactive">Inactive <span class="count" id="tab-inactive-count">(0)</span></button>
-    <button class="tab" data-tab="totalsales">Total Sales</button>
+    <button class="tab" data-tab="transactions">Transactions <span class="count" id="tab-inactive-count">(0)</span></button>
   </div>
 
   <div id="panel-active">
@@ -4117,58 +4241,56 @@
     </div>
   </div>
 
-  <div id="panel-inactive" style="display:none;">
-    <div class="date-range-bar" id="date-range-bar">
-      <div class="date-controls">
-        <label for="inactive-date-from">From</label>
-        <input type="date" id="inactive-date-from">
-        <label for="inactive-date-to">To</label>
-        <input type="date" id="inactive-date-to">
-        <button type="button" id="date-range-clear" class="date-range-clear">Clear</button>
-        <div class="export-group">
-          <button type="button" id="inactive-export-csv" class="export-btn">Export CSV</button>
-          <button type="button" id="inactive-export-pdf" class="export-btn">Export PDF</button>
-        </div>
-      </div>
-    </div>
-    <div class="grid" id="inactive-grid" style="display:none;"></div>
-    <div class="empty" id="inactive-empty" style="display:none;">
-      <strong>No inactive cards yet</strong>
-      Cards you mark as sold move here — full details stay on record.
-    </div>
-    <div class="empty" id="inactive-range-empty" style="display:none;">
-      <strong>Nothing in that range</strong>
-      Try widening the dates, or clear the filter to see everything.
-    </div>
-  </div>
-
-  <div id="panel-totalsales" style="display:none;">
+  <div id="panel-transactions" style="display:none;">
     <div class="scoreboard" style="grid-template-columns: 1fr;">
       <div class="stat gross">
         <div class="label">Total Gross Sales</div>
         <div class="value" id="stat-total-sales">$0.00</div>
       </div>
     </div>
-    <div class="totalsales-toolbar">
-      <div class="export-group">
-        <button type="button" id="totalsales-export-csv" class="export-btn">Export CSV</button>
-        <button type="button" id="totalsales-export-pdf" class="export-btn">Export PDF</button>
+
+    <div class="view-toggle" data-panel="transactions" style="margin-bottom:16px;">
+      <button type="button" class="view-btn active" data-panel="transactions" data-view="cards">Card View</button>
+      <button type="button" class="view-btn" data-panel="transactions" data-view="transactions">Transactions</button>
+    </div>
+
+    <div id="transactions-cards-view">
+      <div class="date-range-bar" id="date-range-bar">
+        <div class="date-controls">
+          <label for="inactive-date-from">From</label>
+          <input type="date" id="inactive-date-from">
+          <label for="inactive-date-to">To</label>
+          <input type="date" id="inactive-date-to">
+          <button type="button" id="date-range-clear" class="date-range-clear">Clear</button>
+          <div class="export-group">
+            <button type="button" id="inactive-export-csv" class="export-btn">Export CSV</button>
+            <button type="button" id="inactive-export-pdf" class="export-btn">Export PDF</button>
+          </div>
+        </div>
+      </div>
+      <div class="grid" id="inactive-grid" style="display:none;"></div>
+      <div class="empty" id="inactive-empty" style="display:none;">
+        <strong>No inactive cards yet</strong>
+        Cards you mark as sold move here — full details stay on record.
+      </div>
+      <div class="empty" id="inactive-range-empty" style="display:none;">
+        <strong>Nothing in that range</strong>
+        Try widening the dates, or clear the filter to see everything.
       </div>
     </div>
-    <table class="sold-table" id="totalsales-table" style="display:none;">
-      <thead>
-        <tr>
-          <th>Card</th>
-          <th class="mono">Set / No.</th>
-          <th class="mono">Sold for</th>
-          <th class="mono">Date &amp; time</th>
-        </tr>
-      </thead>
-      <tbody id="totalsales-tbody"></tbody>
-    </table>
-    <div class="empty" id="totalsales-empty" style="display:none;">
-      <strong>No sales yet</strong>
-      Your total gross sales will show up here once you sell a card.
+
+    <div id="transactions-list-view" style="display:none;">
+      <div class="totalsales-toolbar">
+        <div class="export-group">
+          <button type="button" id="totalsales-export-csv" class="export-btn">Export CSV</button>
+          <button type="button" id="totalsales-export-pdf" class="export-btn">Export PDF</button>
+        </div>
+      </div>
+      <div id="transactions-list"></div>
+      <div class="empty" id="totalsales-empty" style="display:none;">
+        <strong>No sales yet</strong>
+        Your total gross sales will show up here once you sell a card.
+      </div>
     </div>
   </div>
 
@@ -4905,6 +5027,16 @@
     </div>
   </div>
 
+  <div id="transaction-detail-modal-overlay" class="scan-modal-overlay" style="display:none;">
+    <div class="scan-modal">
+      <div class="scan-modal-header">
+        <div class="scan-modal-title">Transaction Details</div>
+        <button type="button" id="transaction-detail-modal-close" class="scan-modal-close">&times;</button>
+      </div>
+      <div class="scan-modal-body" id="transaction-detail-body"></div>
+    </div>
+  </div>
+
   <div id="liquidate-modal-overlay" class="scan-modal-overlay" style="display:none;">
     <div class="scan-modal">
       <div class="scan-modal-header">
@@ -5087,6 +5219,7 @@
   let inactiveDateFrom = '';
   let inactiveDateTo = '';
   let activeView = 'grid';
+  let transactionsView = 'cards';
 
   function money(n){
     const v = Number(n) || 0;
@@ -5386,7 +5519,7 @@
     renderActive();
     renderInactive();
     renderAllInventory();
-    renderTotalSales();
+    renderTransactionsPanel();
     renderDashboard();
     renderSchedule();
     renderSubmissions();
@@ -7056,33 +7189,149 @@
     return [...soldOnly].sort((a, b) => b.dateSold - a.dateSold);
   }
 
-  function renderTotalSales(){
-    const totalEl = document.getElementById('stat-total-sales');
-    const table = document.getElementById('totalsales-table');
-    const tbody = document.getElementById('totalsales-tbody');
+  // Groups sold records by transactionId, so a multi-card Vendor Mode
+  // checkout shows as one line instead of N separate ones. Records from
+  // before transactionId existed each fall back to their own id, so they
+  // simply show as single-card transactions — nothing breaks for old data.
+  function getGroupedTransactions(){
+    const soldOnly = getSortedTotalSales();
+    const groups = {};
+    const order = [];
+    soldOnly.forEach(c => {
+      const key = c.transactionId || c.id;
+      if (!groups[key]){
+        groups[key] = {
+          transactionId: key,
+          dateSold: c.dateSold,
+          paymentMethod: c.paymentMethod || null,
+          tradeInCards: c.tradeInCards || null,
+          tradeNetCash: c.tradeNetCash != null ? c.tradeNetCash : null,
+          cards: []
+        };
+        order.push(key);
+      }
+      groups[key].cards.push(c);
+    });
+    return order.map(k => groups[k]).sort((a, b) => b.dateSold - a.dateSold);
+  }
+
+  function renderTransactionsPanel(){
+    // The gross total is always visible regardless of which sub-view
+    // (Card View / Transactions) is currently showing.
+    const grossSales = getSortedTotalSales().reduce((sum, c) => sum + Number(c.salePrice || 0), 0);
+    document.getElementById('stat-total-sales').textContent = money(grossSales);
+
+    if (transactionsView === 'transactions'){
+      renderTransactionsList();
+    }
+  }
+
+  function renderTransactionsList(){
+    const listEl = document.getElementById('transactions-list');
     const empty = document.getElementById('totalsales-empty');
 
-    const sorted = getSortedTotalSales();
-    const grossSales = sorted.reduce((sum, c) => sum + Number(c.salePrice || 0), 0);
-    totalEl.textContent = money(grossSales);
-
-    if (sorted.length === 0){
-      table.style.display = 'none';
+    const groups = getGroupedTransactions();
+    if (groups.length === 0){
+      listEl.innerHTML = '';
       empty.style.display = 'block';
-      tbody.innerHTML = '';
       return;
     }
     empty.style.display = 'none';
-    table.style.display = 'table';
-    tbody.innerHTML = sorted.map(c => `
-      <tr>
-        <td>${escapeHtml(c.name)}</td>
-        <td class="mono">${escapeHtml(c.set || '—')}${c.number ? ' #' + escapeHtml(c.number) : ''}</td>
-        <td class="mono">${money(c.salePrice)}</td>
-        <td class="mono">${formatDateTime(c.dateSold)}</td>
-      </tr>
-    `).join('');
+
+    listEl.innerHTML = groups.map((g, i) => {
+      const total = g.cards.reduce((sum, c) => sum + Number(c.salePrice || 0), 0);
+      const cardCount = g.cards.length;
+      const methodLabel = g.paymentMethod || 'Not recorded';
+      return `
+        <button type="button" class="transaction-row" data-index="${i}">
+          <div class="transaction-row-main">
+            <div class="transaction-row-title">${cardCount} card${cardCount === 1 ? '' : 's'} &middot; ${escapeHtml(methodLabel)}</div>
+            <div class="transaction-row-meta">${formatDateTime(g.dateSold)}</div>
+          </div>
+          <div class="transaction-row-amount">${money(total)}</div>
+        </button>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('.transaction-row').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index, 10);
+        showTransactionDetailModal(groups[idx]);
+      });
+    });
   }
+
+  function showTransactionDetailModal(group){
+    const body = document.getElementById('transaction-detail-body');
+    const total = group.cards.reduce((sum, c) => sum + Number(c.salePrice || 0), 0);
+    const methodLabel = group.paymentMethod || 'Not recorded';
+
+    let html = `
+      <div class="transaction-detail-meta">${formatDateTime(group.dateSold)}</div>
+      <div class="transaction-detail-method">${escapeHtml(methodLabel)}</div>
+
+      <div class="transaction-detail-section-title">Cards Sold</div>
+      <div class="transaction-detail-cards">
+        ${group.cards.map(c => `
+          <div class="transaction-detail-card-row">
+            <div>
+              <div class="transaction-detail-card-name">${escapeHtml(c.name)}</div>
+              <div class="transaction-detail-card-meta">${escapeHtml(c.set || 'Unknown set')}${c.number ? ' &middot; #' + escapeHtml(c.number) : ''}</div>
+            </div>
+            <div class="transaction-detail-card-price">${money(c.salePrice)}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="transaction-detail-total-row">
+        <span>Total</span>
+        <span>${money(total)}</span>
+      </div>
+    `;
+
+    if (group.paymentMethod === 'Trade' && group.tradeInCards && group.tradeInCards.length > 0){
+      const tradeInTotal = group.tradeInCards.reduce((sum, c) => sum + Number(c.marketPrice || 0), 0);
+      html += `
+        <div class="transaction-detail-section-title">Traded For</div>
+        <div class="transaction-detail-cards">
+          ${group.tradeInCards.map(c => `
+            <div class="transaction-detail-card-row">
+              <div>
+                <div class="transaction-detail-card-name">${escapeHtml(c.name)}</div>
+                <div class="transaction-detail-card-meta">${escapeHtml(c.set || 'Unknown set')}${c.number ? ' &middot; #' + escapeHtml(c.number) : ''}</div>
+              </div>
+              <div class="transaction-detail-card-price">${money(c.marketPrice)}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="transaction-detail-total-row">
+          <span>Trade-In Market Total</span>
+          <span>${money(tradeInTotal)}</span>
+        </div>
+      `;
+      if (group.tradeNetCash != null){
+        const isCredit = group.tradeNetCash > 0.004;
+        const isOwe = group.tradeNetCash < -0.004;
+        const netLabel = isCredit ? 'Buyer Paid You' : (isOwe ? 'You Paid Buyer' : 'Even Trade — No Cash');
+        const netClass = isCredit ? 'credit' : (isOwe ? 'owe' : 'even');
+        html += `
+          <div class="transaction-detail-net-row ${netClass}">
+            <span>${netLabel}</span>
+            <span>${money(Math.abs(group.tradeNetCash))}</span>
+          </div>
+        `;
+      }
+    }
+
+    body.innerHTML = html;
+    document.getElementById('transaction-detail-modal-overlay').style.display = 'flex';
+  }
+
+  document.getElementById('transaction-detail-modal-close').addEventListener('click', () => {
+    document.getElementById('transaction-detail-modal-overlay').style.display = 'none';
+  });
+  document.getElementById('transaction-detail-modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'transaction-detail-modal-overlay') document.getElementById('transaction-detail-modal-overlay').style.display = 'none';
+  });
 
   // ---------- Export (CSV / PDF) ----------
 
@@ -9592,12 +9841,14 @@
 
   function addToVendorTradeCart(card, source){
     const price = extractMarketPrice(card);
+    const photo = (card.images && (card.images.large || card.images.small)) || null;
     vendorTradeCart.push({
       key: uid(),
       name: card.name,
       number: card.number || '',
       set: card.set ? card.set.name : '',
-      marketPrice: price !== null ? price : 0
+      marketPrice: price !== null ? price : 0,
+      photo
     });
     if (price === null){
       setVendorTradeStatus(`Added "${card.name}" — no market price found from ${source || 'this source'}, entered as $0.00 (edit if needed).`, true);
@@ -9862,8 +10113,22 @@
     // Falls back to an even split if nothing to weight by.
     const marketTotal = vendorCart.reduce((sum, c) => sum + getVendorItemPrice(c), 0);
     const dateSold = Date.now();
+    const transactionId = uid();
     const cartIds = new Set(vendorCart.map(c => c.id));
     let allocatedSoFar = 0;
+
+    // For a Trade sale, snapshot what was received and the net cash
+    // difference onto every sold record in this transaction — permanent
+    // history that doesn't depend on looking the trade-in cards back up
+    // later (they might themselves be resold, edited, or removed by then).
+    let tradeInSnapshot = null;
+    let tradeNetCash = null;
+    if (vendorPaymentMethod === 'Trade'){
+      tradeInSnapshot = vendorTradeCart.map(c => ({ name: c.name, number: c.number, set: c.set, marketPrice: c.marketPrice }));
+      const tradeInTotal = vendorTradeCart.reduce((sum, c) => sum + Number(c.marketPrice || 0), 0);
+      const tradeInValue = tradeInTotal * (vendorTradePercent / 100);
+      tradeNetCash = Math.round((marketTotal - tradeInValue) * 100) / 100;
+    }
 
     vendorCart.forEach((card, i) => {
       const itemPrice = getVendorItemPrice(card);
@@ -9897,11 +10162,54 @@
         reason: 'SOLD',
         salePrice: allocated,
         profit: allocated - Number(card.price || 0),
-        paymentMethod: vendorPaymentMethod
+        paymentMethod: vendorPaymentMethod,
+        transactionId,
+        tradeInCards: tradeInSnapshot,
+        tradeNetCash
       });
     });
 
     data.active = data.active.filter(c => !cartIds.has(c.id));
+
+    // Trade-in cards the buyer handed over become new inventory. Their
+    // cost basis is their share of the trade-in value actually applied
+    // (market price × the chosen 65/70/75%), split proportionally across
+    // however many trade-in cards there were — the same fair-split
+    // approach used for the sale side above.
+    if (vendorPaymentMethod === 'Trade' && vendorTradeCart.length > 0){
+      const tradeInTotal = vendorTradeCart.reduce((sum, c) => sum + Number(c.marketPrice || 0), 0);
+      const tradeInValue = tradeInTotal * (vendorTradePercent / 100);
+      let tradeAllocatedSoFar = 0;
+      vendorTradeCart.forEach((tc, i) => {
+        let costBasis;
+        if (i === vendorTradeCart.length - 1){
+          costBasis = tradeInValue - tradeAllocatedSoFar;
+        } else if (tradeInTotal > 0){
+          costBasis = tradeInValue * (tc.marketPrice / tradeInTotal);
+        } else {
+          costBasis = tradeInValue / vendorTradeCart.length;
+        }
+        costBasis = Math.round(costBasis * 100) / 100;
+        tradeAllocatedSoFar += costBasis;
+
+        data.active.push({
+          id: uid(),
+          name: tc.name,
+          number: tc.number || '',
+          set: tc.set || '',
+          price: costBasis,
+          marketPrice: tc.marketPrice,
+          condition: '',
+          gradedCompany: '',
+          grade: '',
+          photo: tc.photo || null,
+          dateAdded: dateSold,
+          acquiredVia: 'Trade',
+          acquiredTransactionId: transactionId
+        });
+      });
+    }
+
     saveData();
     render();
 
@@ -9979,7 +10287,8 @@
       dateAdded: card.dateAdded,
       cost: card.price,
       reason: 'REMOVED',
-      dateSold: Date.now()
+      dateSold: Date.now(),
+      transactionId: uid()
     });
     saveData();
     render();
@@ -10005,7 +10314,8 @@
       salePrice: salePrice,
       profit: salePrice - card.price,
       reason: 'SOLD',
-      dateSold: Date.now()
+      dateSold: Date.now(),
+      transactionId: uid()
     });
     saveData();
     render();
@@ -10112,6 +10422,11 @@
       } else if (panel === 'allinventory'){
         allInventoryView = view;
         renderAllInventory();
+      } else if (panel === 'transactions'){
+        transactionsView = view;
+        document.getElementById('transactions-cards-view').style.display = view === 'cards' ? 'block' : 'none';
+        document.getElementById('transactions-list-view').style.display = view === 'transactions' ? 'block' : 'none';
+        if (view === 'transactions') renderTransactionsList();
       }
     });
   });
@@ -10153,8 +10468,7 @@
       tab.classList.add('active');
       currentTab = tab.dataset.tab;
       document.getElementById('panel-active').style.display = currentTab === 'active' ? 'block' : 'none';
-      document.getElementById('panel-inactive').style.display = currentTab === 'inactive' ? 'block' : 'none';
-      document.getElementById('panel-totalsales').style.display = currentTab === 'totalsales' ? 'block' : 'none';
+      document.getElementById('panel-transactions').style.display = currentTab === 'transactions' ? 'block' : 'none';
     });
   });
 
