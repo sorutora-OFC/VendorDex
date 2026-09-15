@@ -1602,6 +1602,22 @@
     letter-spacing: 0.05em;
     color: var(--muted);
   }
+  .perf-x-label{
+    background: none;
+    border: none;
+    padding: 4px 6px;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .perf-x-label:hover{ color: var(--text); }
+  .perf-x-label.active{
+    color: var(--gold);
+    background: rgba(139,92,246,0.12);
+  }
 
   .next-show-card{
     display: block;
@@ -1850,8 +1866,8 @@
     font-size: 22px;
     text-shadow: 0 0 16px currentColor;
   }
-  .stat.gross .value{ color: var(--gold); }
-  .stat.profit .value{ color: var(--profit); }
+  .stat.gross .value{ color: #F7F8FA; }
+  .stat.profit .value{ color: #F7F8FA; }
   .stat.profit.negative .value{ color: var(--loss); }
   .stat::after{
     content: "";
@@ -4550,18 +4566,23 @@
     <div class="dash-welcome">Welcome back, <span id="dash-username">JSBreakz</span></div>
     <div class="scoreboard cols-2">
       <div class="stat gross">
-        <div class="label">Gross Inventory (Market)</div>
+        <div class="label">Inventory Value</div>
         <div class="value" id="dash-stat-gross">$0.00</div>
         <div class="stat-marker" id="dash-stat-gross-marker"></div>
       </div>
       <div class="stat profit" id="dash-stat-profit-box">
-        <div class="label" id="dash-month-label">Profit This Month</div>
+        <div class="label">
+          Profit
+          <span class="stat-info-wrap">
+            <svg class="stat-info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="11"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <div class="stat-info-popup" id="dash-profit-month-popup"></div>
+          </span>
+        </div>
         <div class="value" id="dash-stat-monthprofit">$0.00</div>
         <div class="stat-marker" id="dash-stat-profit-marker"></div>
       </div>
     </div>
     <div class="perf-section">
-      <div class="perf-title">Profit Performance</div>
       <div class="perf-chart-wrap" id="perf-chart-wrap">
         <svg class="perf-chart" id="perf-chart" viewBox="0 0 600 180" preserveAspectRatio="none">
           <defs>
@@ -4579,8 +4600,8 @@
         </svg>
         <div class="perf-tooltip" id="perf-tooltip"></div>
       </div>
-      <div class="perf-x-labels">
-        <span>1D</span><span>7D</span><span>1M</span><span>3M</span><span>6M</span><span>1Y</span>
+      <div class="perf-x-labels" id="perf-x-labels">
+        <button type="button" class="perf-x-label" data-index="0">1D</button><button type="button" class="perf-x-label" data-index="1">7D</button><button type="button" class="perf-x-label" data-index="2">1M</button><button type="button" class="perf-x-label" data-index="3">3M</button><button type="button" class="perf-x-label" data-index="4">6M</button><button type="button" class="perf-x-label" data-index="5">1Y</button>
       </div>
     </div>
 
@@ -6243,7 +6264,7 @@
 
     document.getElementById('dash-stat-gross').textContent = money(gross);
     document.getElementById('dash-stat-monthprofit').textContent = money(monthlyProfit);
-    document.getElementById('dash-month-label').textContent = `Profit This Month (${now.toLocaleString(undefined, { month: 'long' })})`;
+    document.getElementById('dash-profit-month-popup').textContent = now.toLocaleString(undefined, { month: 'long' });
     document.getElementById('dash-stat-profit-box').classList.toggle('negative', monthlyProfit < 0);
 
     // ---- Gross Inventory marker: true net change since the start of the
@@ -6433,6 +6454,20 @@
       rect.addEventListener('mouseenter', () => showHover(p));
       rect.addEventListener('mouseleave', hideHover);
       hitGroup.appendChild(rect);
+    });
+
+    // Tapping a period label pins that point's tooltip — the hit-areas
+    // above already do this on hover, but a tiny 3.5px point is hard to
+    // tap precisely on a phone, while these labels are a much easier
+    // target for the same result.
+    document.querySelectorAll('#perf-x-labels .perf-x-label').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index, 10);
+        const p = points[idx];
+        if (!p) return;
+        document.querySelectorAll('#perf-x-labels .perf-x-label').forEach(b => b.classList.toggle('active', b === btn));
+        showHover(p);
+      });
     });
   }
 
