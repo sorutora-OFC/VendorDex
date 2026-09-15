@@ -3733,6 +3733,20 @@
     cursor: pointer;
   }
   .override-panel .restore-btn:hover{ border-color: var(--gold); color: var(--holo); }
+  .override-panel .delete-record-btn{
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(232,105,122,0.4);
+    color: var(--loss);
+    border-radius: 6px;
+    padding: 7px 8px;
+    margin-top: 8px;
+    font-size: 12px;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .override-panel .delete-record-btn:hover{ background: var(--loss); border-color: var(--loss); color: var(--ink); }
   .override-panel .edit-sale-label{
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
@@ -7129,6 +7143,7 @@
             <input type="number" step="0.01" min="0" class="edit-sale-price" value="${c.salePrice}">
             <button type="button" class="confirm-edit-sale">Save</button>
           </div>`}
+          <button type="button" class="delete-record-btn">Delete</button>
         </div>
       </div>
     `;
@@ -7180,6 +7195,22 @@
     grid.querySelectorAll('.edit-sale-price').forEach(input => {
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') e.target.closest('.override-panel').querySelector('.confirm-edit-sale').click();
+      });
+    });
+
+    // Permanently deletes the record — for test/accidental entries, not
+    // a normal correction. Unlike Restore, this does NOT put the card
+    // back in Active; the record is just gone. Confirmed before it runs.
+    grid.querySelectorAll('.delete-record-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.target.closest('.card-tile').dataset.id;
+        const c = sorted.find(x => x.id === id);
+        const label = c ? `"${c.name}"` : 'this record';
+        showConfirmDialog(
+          `Permanently delete ${label}? This can't be undone — it won't be restored to Active, it's just gone.`,
+          () => deleteSoldRecord(id),
+          'Delete'
+        );
       });
     });
   }
@@ -9663,6 +9694,7 @@
     vendorCart = [];
     vendorPaymentMethod = null;
     vendorPriceOverrides = {};
+    vendorSalePriceUserSet = false;
     document.getElementById('vendor-search-input').value = '';
     document.getElementById('vendor-search-results').innerHTML = '';
     document.getElementById('vendor-scan-status').style.display = 'none';
@@ -9785,9 +9817,18 @@
   // Split out from renderVendorCart so editing a price live only needs to
   // recompute totals/suggestions, not re-render (and lose focus on) every
   // price input in the cart.
+  // Auto-fills Sale Price with the cart's full market total so a full-price
+  // sale needs zero typing — stops the moment the vendor picks a discount
+  // % or edits the field themselves, so it never fights a real choice.
+  let vendorSalePriceUserSet = false;
+
   function renderVendorTotals(){
     const marketTotal = vendorCart.reduce((sum, c) => sum + getVendorItemPrice(c), 0);
     document.getElementById('vendor-market-total').textContent = money(marketTotal);
+
+    if (!vendorSalePriceUserSet){
+      document.getElementById('vendor-sale-price').value = marketTotal > 0 ? marketTotal.toFixed(2) : '';
+    }
 
     const suggestEl = document.getElementById('vendor-suggest-rows');
     if (marketTotal > 0){
@@ -9800,6 +9841,7 @@
       suggestEl.querySelectorAll('.vendor-suggest-row').forEach(btn => {
         btn.addEventListener('click', () => {
           document.getElementById('vendor-sale-price').value = btn.dataset.price;
+          vendorSalePriceUserSet = true;
         });
       });
     } else {
@@ -9808,6 +9850,10 @@
 
     renderVendorTradeCalc();
   }
+
+  document.getElementById('vendor-sale-price').addEventListener('input', () => {
+    vendorSalePriceUserSet = true;
+  });
 
   // ---- Trade-in calculator ----
   // Separate from the main cart: these are cards the BUYER is offering,
@@ -9894,11 +9940,19 @@
           `;
         }).join('');
         resultsEl.querySelectorAll('.vendor-search-result-row').forEach(btn => {
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', async () => {
             const idx = parseInt(btn.dataset.index, 10);
-            addToVendorTradeCart(entries[idx].card, entries[idx].source);
+            const entry = entries[idx];
             document.getElementById('vendor-trade-search-input').value = '';
             resultsEl.innerHTML = '';
+            setVendorTradeStatus('Loading card photo…');
+            // PokéWallet results need a separate authenticated fetch to
+            // resolve an actual image (their search results come back
+            // with no image URL at all) — same step the main Search
+            // Cards flow already does before showing a card. Skipping it
+            // here was why trade-in cards had no photo.
+            const card = await resolveCardImage(entry);
+            addToVendorTradeCart(card, entry.source);
           });
         });
       } catch(err){
@@ -10219,6 +10273,7 @@
     vendorCart = [];
     vendorPaymentMethod = null;
     vendorPriceOverrides = {};
+    vendorSalePriceUserSet = false;
     document.getElementById('vendor-sale-price').value = '';
     document.querySelectorAll('.vendor-payment-btn').forEach(b => b.classList.remove('active'));
     resetVendorTrade();
@@ -10348,6 +10403,15 @@
     if (!record) return;
     record.salePrice = newSalePrice;
     record.profit = newSalePrice - record.cost;
+    saveData();
+    render();
+  }
+
+  // Permanently removes a sold/removed record — for cleaning up test or
+  // accidental entries. Unlike restoreToActive, this does not put the
+  // card back into Active inventory; the record is simply deleted.
+  function deleteSoldRecord(id){
+    data.sold = data.sold.filter(c => c.id !== id);
     saveData();
     render();
   }
