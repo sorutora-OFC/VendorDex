@@ -747,6 +747,9 @@
     color: var(--muted);
     margin-top: 3px;
   }
+  /* Dashboard's Top 3 Sales reuses this same component, but wants white
+     pricing instead of the Account page's muted gray. */
+  #dash-analytics-grid .account-top-card-value{ color: #F7F8FA; }
 
   /* ---------- Account Info + Log out ---------- */
   .account-info-section{
@@ -1869,6 +1872,8 @@
   .stat.gross .value{ color: #F7F8FA; }
   .stat.profit .value{ color: #F7F8FA; }
   .stat.profit.negative .value{ color: var(--loss); }
+  #screen-dashboard .stat.gross .value,
+  #screen-dashboard .stat.profit .value{ text-shadow: none; }
   .stat::after{
     content: "";
     position: absolute;
@@ -4649,8 +4654,13 @@
     </button>
 
     <div class="analytics" id="dash-analytics-section" style="display:none;">
-      <div class="analytics-title">Top 3 Sales</div>
-      <div class="analytics-grid" id="dash-analytics-grid"></div>
+      <div class="account-top-cards-container">
+        <div class="account-top-cards-heading">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-5 5 5 5 0 0 1-5-5V4Z"/><path d="M17 5h3a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-.5M7 5H4a2 2 0 0 0-2 2v1a3 3 0 0 0 3 3h.5"/></svg>
+          Top 3 Sales
+        </div>
+        <div id="dash-analytics-grid"></div>
+      </div>
     </div>
 
     <button type="button" id="go-ledger-btn" class="auth-btn dash-ledger-btn">Open Store →</button>
@@ -6579,7 +6589,8 @@
     }
 
     const top3 = [...soldOnly].sort((a, b) => b.salePrice - a.salePrice).slice(0, 3);
-    const html = top3.map((c, i) => `
+
+    const cardGridHtml = top3.map((c, i) => `
       <div class="analytics-card">
         <div class="analytics-rank">${i + 1}</div>
         ${c.photo ? `<img class="analytics-photo" src="${c.photo}" alt="${escapeHtml(c.name)}">` : ''}
@@ -6591,10 +6602,23 @@
       </div>
     `).join('');
 
-    targets.forEach(t => {
-      document.getElementById(t.sectionId).style.display = 'block';
-      document.getElementById(t.gridId).innerHTML = html;
-    });
+    // Dashboard version reuses the same flush single-container look as
+    // Top Selling Cards on the Account page, rather than the boxed
+    // per-card grid the Store screen's version still uses.
+    const flushRowsHtml = top3.map((c, i) => `
+      <div class="account-top-card-row">
+        <div class="account-top-card-rank">${i + 1}</div>
+        <div class="account-top-card-info">
+          <div class="account-top-card-name-line">${escapeHtml(c.name)}${c.number ? `<span class="number">#${escapeHtml(c.number)}</span>` : ''}</div>
+          <div class="account-top-card-value">${money(c.salePrice)}</div>
+        </div>
+      </div>
+    `).join('');
+
+    document.getElementById('analytics-section').style.display = 'block';
+    document.getElementById('analytics-grid').innerHTML = cardGridHtml;
+    document.getElementById('dash-analytics-section').style.display = 'block';
+    document.getElementById('dash-analytics-grid').innerHTML = flushRowsHtml;
   }
 
   function renderStats(){
