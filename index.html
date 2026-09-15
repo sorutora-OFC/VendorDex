@@ -749,7 +749,7 @@
   }
   /* Dashboard's Top 3 Sales reuses this same component, but wants white
      pricing instead of the Account page's muted gray. */
-  #dash-analytics-grid .account-top-card-value{ color: #F7F8FA; }
+  #dash-analytics-grid .account-top-card-value{ color: #C7C9D1; }
 
   /* ---------- Account Info + Log out ---------- */
   .account-info-section{
@@ -1115,7 +1115,7 @@
     margin-top: 6px;
   }
 
-  .profile-avatar-display{ cursor: default; }
+  .profile-avatar-display{ cursor: default; box-shadow: 0 0 0 1px rgba(167,139,250,0.3), 0 0 26px rgba(139,92,246,0.4), 0 0 52px rgba(167,139,250,0.2); }
   .profile-avatar-display:hover{ border-color: var(--line); }
   .profile-avatar-display .profile-avatar-overlay{ display: none; }
 
@@ -1952,6 +1952,10 @@
 
   @media (max-width: 640px){
     .scoreboard{ grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 641px){
+    #screen-dashboard .scoreboard.cols-2 .stat{ text-align: center; }
+    #screen-dashboard .scoreboard.cols-2 .stat .stat-marker{ justify-content: center; }
   }
   .scoreboard.cols-3{ grid-template-columns: repeat(3, 1fr); }
   @media (max-width: 640px){
@@ -3187,6 +3191,12 @@
     flex-wrap: wrap;
     gap: 10px;
   }
+  .condition-filter-tabs{
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    padding: 2px 2px 0;
+  }
   .sort-bar label{
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
@@ -3843,6 +3853,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    background: var(--ink);
   }
   .card-tile.mini-tile:hover{
     border-color: var(--holo);
@@ -3907,6 +3918,62 @@
     padding: 3px 8px;
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,0.1);
+  }
+  .mini-tile-topleft-badges{
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    z-index: 2;
+  }
+  .mini-tile-condition-badge{
+    background: rgba(18,18,20,0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(167,139,250,0.55);
+    color: var(--holo);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    box-shadow: 0 0 8px rgba(167,139,250,0.6), 0 0 16px rgba(139,92,246,0.35);
+  }
+  .mini-tile-graded-badge{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(18,18,20,0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,200,87,0.6);
+    color: var(--gold);
+    box-shadow: 0 0 8px rgba(255,200,87,0.55), 0 0 16px rgba(255,200,87,0.3);
+  }
+  .mini-tile-graded-badge svg{ width: 12px; height: 12px; }
+  .mini-tile-price-badge{
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(18,18,20,0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(16,185,129,0.55);
+    color: var(--profit);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    box-shadow: 0 0 8px rgba(16,185,129,0.55), 0 0 18px rgba(16,185,129,0.3);
+    z-index: 2;
   }
   .mini-tile-body{
     padding: 10px 12px 12px;
@@ -4656,7 +4723,6 @@
     <div class="analytics" id="dash-analytics-section" style="display:none;">
       <div class="account-top-cards-container">
         <div class="account-top-cards-heading">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-5 5 5 5 0 0 1-5-5V4Z"/><path d="M17 5h3a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-.5M7 5H4a2 2 0 0 0-2 2v1a3 3 0 0 0 3 3h.5"/></svg>
           Top 3 Sales
         </div>
         <div id="dash-analytics-grid"></div>
@@ -4685,11 +4751,6 @@
       <div class="label">Sold</div>
       <div class="value" id="stat-sold">0</div>
     </div>
-  </div>
-
-  <div class="analytics" id="analytics-section" style="display:none;">
-    <div class="analytics-title">Top 3 Sales</div>
-    <div class="analytics-grid" id="analytics-grid"></div>
   </div>
 
   <button type="button" id="start-vendor-mode-btn" class="vendor-mode-btn">
@@ -4894,45 +4955,34 @@
       </button>
     </div>
     <div class="sort-bar">
-      <div class="view-toggle" data-panel="allinventory">
-        <button type="button" class="view-btn active" data-panel="allinventory" data-view="grid">Grid</button>
-        <button type="button" class="view-btn" data-panel="allinventory" data-view="list">List</button>
+      <div class="condition-filter-tabs tcg-tabs" id="condition-filter-tabs">
+        <button type="button" class="tcg-tab active" data-condition="all">ALL</button>
+        <button type="button" class="tcg-tab" data-condition="Mint">M</button>
+        <button type="button" class="tcg-tab" data-condition="Near Mint">NM</button>
+        <button type="button" class="tcg-tab" data-condition="Lightly Played">LP</button>
+        <button type="button" class="tcg-tab" data-condition="Moderately Played">MP</button>
+        <button type="button" class="tcg-tab" data-condition="Heavily Played">HP</button>
+        <button type="button" class="tcg-tab" data-condition="Damaged">DMG</button>
       </div>
-      <label class="flag-filter-toggle">
-        <input type="checkbox" id="allinventory-flag-filter">
-        Only show 61+ days (MOVE/LIQUIDATE)
-      </label>
       <div class="sort-controls" style="margin-left:auto;">
         <label for="allinventory-sort-select">Sort</label>
         <select id="allinventory-sort-select">
-          <option value="name">Name (A–Z)</option>
-          <option value="set">Set (A–Z)</option>
+          <option value="recent">Recently Added</option>
+          <option value="price-high">Price (High to Low)</option>
+          <option value="price-low">Price (Low to High)</option>
+          <option value="name-az">Name (A to Z)</option>
+          <option value="name-za">Name (Z to A)</option>
         </select>
       </div>
     </div>
     <div class="grid" id="allinventory-grid" style="display:none;"></div>
-    <div class="list-table-scroll">
-      <table class="list-table" id="allinventory-list-table" style="display:none;">
-        <thead>
-          <tr>
-            <th></th>
-            <th>Card</th>
-            <th class="mono">Set / No.</th>
-            <th>Status</th>
-            <th class="mono">Qty</th>
-            <th>Flag</th>
-          </tr>
-        </thead>
-        <tbody id="allinventory-list-tbody"></tbody>
-      </table>
-    </div>
     <div class="empty" id="allinventory-empty" style="display:none;">
       <strong>No cards yet</strong>
       Cards you add or sell will show up here together.
     </div>
     <div class="empty" id="allinventory-flag-empty" style="display:none;">
-      <strong>Nothing flagged</strong>
-      No active cards have been sitting for 61+ days right now.
+      <strong>Nothing matches that filter</strong>
+      Try a different condition, or tap ALL to see everything.
     </div>
   </div>
 
@@ -5851,9 +5901,8 @@
   let data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, grossHistory: [], wishlist: [], collection: [], collections: [], dataVersion: 1 };
   let currentTab = 'active';
   let sortMode = 'recent';
-  let allInventorySortMode = 'name';
-  let allInventoryView = 'grid';
-  let allInventoryFlaggedOnly = false;
+  let allInventorySortMode = 'recent';
+  let allInventoryConditionFilter = 'all';
   let calendarMonthOffset = 0;
   let selectedDateFilter = null;
   let pendingPhoto = null;
@@ -6575,36 +6624,17 @@
 
   function renderAnalytics(){
     const soldOnly = data.sold.filter(c => (c.reason || 'SOLD') === 'SOLD');
-    const targets = [
-      { sectionId: 'analytics-section', gridId: 'analytics-grid' },
-      { sectionId: 'dash-analytics-section', gridId: 'dash-analytics-grid' }
-    ];
 
     if (soldOnly.length === 0){
-      targets.forEach(t => {
-        document.getElementById(t.sectionId).style.display = 'none';
-        document.getElementById(t.gridId).innerHTML = '';
-      });
+      document.getElementById('dash-analytics-section').style.display = 'none';
+      document.getElementById('dash-analytics-grid').innerHTML = '';
       return;
     }
 
     const top3 = [...soldOnly].sort((a, b) => b.salePrice - a.salePrice).slice(0, 3);
 
-    const cardGridHtml = top3.map((c, i) => `
-      <div class="analytics-card">
-        <div class="analytics-rank">${i + 1}</div>
-        ${c.photo ? `<img class="analytics-photo" src="${c.photo}" alt="${escapeHtml(c.name)}">` : ''}
-        <div class="analytics-info">
-          <div class="name">${escapeHtml(c.name)}</div>
-          <div class="set">${escapeHtml(c.set || 'Unknown set')}</div>
-          <div class="amount">${money(c.salePrice)}</div>
-        </div>
-      </div>
-    `).join('');
-
-    // Dashboard version reuses the same flush single-container look as
-    // Top Selling Cards on the Account page, rather than the boxed
-    // per-card grid the Store screen's version still uses.
+    // Flush single-container look, matching Top Selling Cards on the
+    // Account page.
     const flushRowsHtml = top3.map((c, i) => `
       <div class="account-top-card-row">
         <div class="account-top-card-rank">${i + 1}</div>
@@ -6615,8 +6645,6 @@
       </div>
     `).join('');
 
-    document.getElementById('analytics-section').style.display = 'block';
-    document.getElementById('analytics-grid').innerHTML = cardGridHtml;
     document.getElementById('dash-analytics-section').style.display = 'block';
     document.getElementById('dash-analytics-grid').innerHTML = flushRowsHtml;
   }
@@ -6724,11 +6752,23 @@
     document.getElementById('allocation-sealed-bar').style.width = pctNum(sealedValue) + '%';
   }
 
+  function conditionAbbrev(condition){
+    const map = {
+      'Mint': 'M',
+      'Near Mint': 'NM',
+      'Lightly Played': 'LP',
+      'Moderately Played': 'MP',
+      'Heavily Played': 'HP',
+      'Damaged': 'DMG',
+      'Sealed': 'SEALED'
+    };
+    return map[condition] || null;
+  }
+
   function renderAllInventory(){
     renderCollectionAllocation();
     renderInventoryValueChart();
     const grid = document.getElementById('allinventory-grid');
-    const listTable = document.getElementById('allinventory-list-table');
     const empty = document.getElementById('allinventory-empty');
 
     const { combined, merged: allMerged } = getMergedAllInventory();
@@ -6737,25 +6777,21 @@
 
     if (combined.length === 0){
       grid.style.display = 'none';
-      listTable.style.display = 'none';
       empty.style.display = 'block';
       document.getElementById('allinventory-flag-empty').style.display = 'none';
       grid.innerHTML = '';
-      document.getElementById('allinventory-list-tbody').innerHTML = '';
       return;
     }
 
     let merged = allMerged;
-    if (allInventoryFlaggedOnly){
-      merged = merged.filter(c => c.age && (c.age.tier === 'move' || c.age.tier === 'liquidate'));
+    if (allInventoryConditionFilter !== 'all'){
+      merged = merged.filter(c => c.sampleRecord && c.sampleRecord.condition === allInventoryConditionFilter);
     }
 
     if (merged.length === 0){
       grid.style.display = 'none';
-      listTable.style.display = 'none';
       grid.innerHTML = '';
-      document.getElementById('allinventory-list-tbody').innerHTML = '';
-      if (allInventoryFlaggedOnly && combined.length > 0){
+      if (allInventoryConditionFilter !== 'all' && combined.length > 0){
         empty.style.display = 'none';
         document.getElementById('allinventory-flag-empty').style.display = 'block';
       } else {
@@ -6767,68 +6803,53 @@
     empty.style.display = 'none';
     document.getElementById('allinventory-flag-empty').style.display = 'none';
 
-    if (allInventorySortMode === 'set'){
-      merged.sort((a, b) => (a.set || '').localeCompare(b.set || '') || a.name.localeCompare(b.name));
+    if (allInventorySortMode === 'price-high'){
+      merged.sort((a, b) => marketPriceOf(b.sampleRecord || {}) - marketPriceOf(a.sampleRecord || {}));
+    } else if (allInventorySortMode === 'price-low'){
+      merged.sort((a, b) => marketPriceOf(a.sampleRecord || {}) - marketPriceOf(b.sampleRecord || {}));
+    } else if (allInventorySortMode === 'name-za'){
+      merged.sort((a, b) => b.name.localeCompare(a.name));
+    } else if (allInventorySortMode === 'name-az'){
+      merged.sort((a, b) => a.name.localeCompare(b.name));
     } else {
-      merged.sort((a, b) => a.name.localeCompare(b.name) || (a.set || '').localeCompare(b.set || ''));
+      // Recently Added — active groups with a tracked date sort newest
+      // first; sold-only groups (no tracked add date) sink to the end.
+      merged.sort((a, b) => (b.oldestDateAdded || 0) - (a.oldestDateAdded || 0));
     }
 
-    if (allInventoryView === 'list'){
-      grid.style.display = 'none';
-      grid.innerHTML = '';
-      listTable.style.display = 'table';
-      renderAllInventoryListRows(merged);
-    } else {
-      listTable.style.display = 'none';
-      document.getElementById('allinventory-list-tbody').innerHTML = '';
-      grid.style.display = 'grid';
-      renderAllInventoryGridTiles(merged);
-    }
+    grid.style.display = 'grid';
+    renderAllInventoryGridTiles(merged);
   }
 
   function renderAllInventoryGridTiles(merged){
     const grid = document.getElementById('allinventory-grid');
-    grid.innerHTML = merged.map((c, i) => `
+    grid.innerHTML = merged.map((c, i) => {
+      const sample = c.sampleRecord || {};
+      const price = marketPriceOf(sample);
+      const condAbbrev = conditionAbbrev(sample.condition);
+      return `
       <div class="card-tile mini-tile clickable" data-index="${i}">
         <div class="mini-tile-photo-wrap">
           ${c.photo
             ? `<img class="mini-tile-img" src="${c.photo}" alt="${escapeHtml(c.name)}" loading="lazy" decoding="async">`
             : `<div class="mini-tile-img-empty">No Photo</div>`}
-          <span class="mini-tile-status-badge status-${c.status}">${c.status === 'active' ? 'Active' : 'Sold'}</span>
+          <div class="mini-tile-topleft-badges">
+            ${condAbbrev ? `<span class="mini-tile-condition-badge">${escapeHtml(condAbbrev)}</span>` : ''}
+            ${sample.gradedCompany ? `<span class="mini-tile-graded-badge" title="${escapeHtml(sample.gradedCompany)}${sample.grade ? ' ' + escapeHtml(sample.grade) : ''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg></span>` : ''}
+          </div>
           ${c.qty > 1 ? `<span class="mini-tile-qty-badge">&times;${c.qty}</span>` : ''}
+          <span class="mini-tile-price-badge">${money(price)}</span>
         </div>
         <div class="mini-tile-body">
           <div class="mini-tile-name">${escapeHtml(c.name)}</div>
-          ${c.age ? `<span class="age-badge age-${c.age.tier}">${c.age.label}</span>` : ''}
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
 
     grid.querySelectorAll('.card-tile').forEach(tile => {
       tile.addEventListener('click', () => {
         const idx = parseInt(tile.dataset.index, 10);
-        const record = merged[idx] && merged[idx].sampleRecord;
-        if (record) showCardDetailModal(record, { showAging: true });
-      });
-    });
-  }
-
-  function renderAllInventoryListRows(merged){
-    const tbody = document.getElementById('allinventory-list-tbody');
-    tbody.innerHTML = merged.map((c, i) => `
-      <tr class="clickable-row" data-index="${i}">
-        <td>${c.photo ? `<img class="list-thumb" src="${c.photo}" alt="${escapeHtml(c.name)}">` : '<div class="list-thumb-empty"></div>'}</td>
-        <td>${escapeHtml(c.name)}</td>
-        <td class="mono">${escapeHtml(c.set || '—')}${c.number ? ' #' + escapeHtml(c.number) : ''}</td>
-        <td><span class="status-badge status-${c.status}">${c.status === 'active' ? 'Active' : 'Sold'}</span></td>
-        <td class="mono">${c.qty}</td>
-        <td>${c.age ? `<span class="age-badge age-${c.age.tier}">${c.age.label}</span>` : ''}</td>
-      </tr>
-    `).join('');
-
-    tbody.querySelectorAll('tr.clickable-row').forEach(row => {
-      row.addEventListener('click', () => {
-        const idx = parseInt(row.dataset.index, 10);
         const record = merged[idx] && merged[idx].sampleRecord;
         if (record) showCardDetailModal(record, { showAging: true });
       });
@@ -11542,9 +11563,13 @@
     renderAllInventory();
   });
 
-  document.getElementById('allinventory-flag-filter').addEventListener('change', (e) => {
-    allInventoryFlaggedOnly = e.target.checked;
-    renderAllInventory();
+  document.querySelectorAll('#condition-filter-tabs .tcg-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#condition-filter-tabs .tcg-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      allInventoryConditionFilter = btn.dataset.condition;
+      renderAllInventory();
+    });
   });
 
   document.querySelectorAll('.view-btn').forEach(btn => {
@@ -11556,9 +11581,6 @@
       if (panel === 'active'){
         activeView = view;
         renderActive();
-      } else if (panel === 'allinventory'){
-        allInventoryView = view;
-        renderAllInventory();
       } else if (panel === 'transactions'){
         transactionsView = view;
         document.getElementById('transactions-cards-view').style.display = view === 'cards' ? 'block' : 'none';
