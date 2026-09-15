@@ -562,20 +562,17 @@
   .backup-note.error{ color: var(--loss); }
 
   .settings-profile-header{
-    position: sticky;
-    top: var(--app-nav-height, 0px);
-    z-index: 20;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    background: var(--ink);
-    padding: 14px 0;
-    margin-bottom: 18px;
-    border-bottom: 1px solid var(--line);
+    text-align: center;
+    gap: 4px;
+    padding: 30px 0 24px;
+    margin-bottom: 6px;
   }
   .settings-profile-avatar{
-    width: 44px;
-    height: 44px;
+    width: 78px;
+    height: 78px;
     border-radius: 50%;
     background: var(--sleeve);
     border: 1px solid var(--line);
@@ -584,6 +581,8 @@
     justify-content: center;
     overflow: hidden;
     flex-shrink: 0;
+    margin-bottom: 8px;
+    box-shadow: 0 0 0 1px rgba(167,139,250,0.3), 0 0 26px rgba(139,92,246,0.4), 0 0 52px rgba(167,139,250,0.2);
   }
   .settings-profile-avatar img{
     width: 100%;
@@ -591,15 +590,135 @@
     object-fit: cover;
   }
   .settings-profile-avatar .profile-avatar-placeholder{
-    width: 22px;
-    height: 22px;
+    width: 36px;
+    height: 36px;
     color: var(--muted);
   }
   .settings-profile-name{
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
-    font-size: 15px;
+    font-size: 19px;
     color: var(--text);
+  }
+  .settings-profile-email{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ---------- Account tabs (Stats / Settings) ---------- */
+  .account-tabs{
+    display: flex;
+    gap: 8px;
+    margin: 4px 0 22px;
+  }
+  .account-tab{
+    flex: 1;
+    text-align: center;
+    padding: 11px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--sleeve);
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .account-tab:hover{ border-color: var(--holo); color: var(--text); }
+  .account-tab.active{
+    background: linear-gradient(135deg, var(--gold), var(--holo));
+    border-color: transparent;
+    color: var(--ink);
+    box-shadow: 0 0 18px rgba(167,139,250,0.4);
+  }
+
+  /* ---------- Top Selling Cards ---------- */
+  .account-top-card-row{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--sleeve);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .account-top-card-row:hover{
+    border-color: var(--holo);
+    box-shadow: 0 0 16px rgba(167,139,250,0.18);
+  }
+  .account-top-card-rank{
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 1px solid rgba(167,139,250,0.4);
+    color: var(--holo);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .account-top-card-photo{
+    width: 38px;
+    height: 52px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: var(--ink);
+    flex-shrink: 0;
+  }
+  .account-top-card-info{ flex: 1; min-width: 0; }
+  .account-top-card-name{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .account-top-card-value{
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--profit);
+    margin-top: 2px;
+  }
+
+  /* ---------- Account Info + Log out ---------- */
+  .account-info-row{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .account-info-row span:last-child{ color: var(--text); font-weight: 600; }
+  .account-logout-btn{
+    width: 100%;
+    padding: 14px;
+    margin: 4px 0 30px;
+    background: var(--sleeve);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .account-logout-btn:hover{
+    border-color: var(--loss);
+    color: var(--loss);
+    box-shadow: 0 0 16px rgba(232,105,122,0.18);
   }
 
   .settings-section{
@@ -641,7 +760,10 @@
     font-size: 13.5px;
   }
   .settings-text-input:focus{ outline: none; border-color: var(--gold); }
-  .settings-danger-zone{ border-color: var(--loss); }
+  .settings-danger-zone{
+    border-color: rgba(232,105,122,0.4);
+    box-shadow: 0 0 18px rgba(232,105,122,0.1);
+  }
 
   /* ---------- Explore Sets (Search) ---------- */
   .explore-note{
@@ -690,6 +812,35 @@
     color: var(--ink);
   }
   .tcg-panel{ margin-top: 12px; }
+
+  /* ---------- Collection switcher + value header ---------- */
+  .tcg-tab.new-collection-tab{
+    border-style: dashed;
+    color: var(--holo);
+  }
+  .collection-value-header{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    background: var(--sleeve);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+  }
+  .collection-value-header-name{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+  }
+  .collection-value-header-value{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--holo);
+  }
+
   .tcg-coming-soon{
     display: flex;
     flex-direction: column;
@@ -4734,10 +4885,12 @@
   </div>
 
   <div id="screen-collectionhome" style="display:none;">
-    <div class="dash-welcome">My Collection</div>
+    <div class="dash-welcome">Collection</div>
+    <div class="collection-switcher" id="collectionhome-switcher"></div>
+    <div class="dash-welcome" id="collectionhome-name" style="font-size:18px; margin-bottom:14px;"></div>
     <div class="scoreboard cols-3">
       <div class="stat gross">
-        <div class="label">Collection Value (Market)</div>
+        <div class="label">Value (Market)</div>
         <div class="value" id="collection-stat-gross">$0.00</div>
       </div>
       <div class="stat stock">
@@ -4754,10 +4907,27 @@
 
   <div id="screen-mycollection" style="display:none;">
     <div class="dash-welcome">My Collection <span id="mycollection-count-label" style="color:var(--muted); font-size:14px;"></span></div>
+    <div class="collection-switcher" id="mycollection-switcher"></div>
+    <div class="collection-value-header" id="mycollection-value-header"></div>
     <div class="grid" id="mycollection-grid" style="display:none;"></div>
     <div class="empty" id="mycollection-empty" style="display:none;">
-      <strong>No cards in your collection yet</strong>
+      <strong>No cards in this collection yet</strong>
       Browse Explore and tap a card to add it here.
+    </div>
+  </div>
+
+  <div id="create-collection-modal-overlay" class="scan-modal-overlay" style="display:none;">
+    <div class="scan-modal">
+      <div class="scan-modal-header">
+        <div class="scan-modal-title">New Collection</div>
+        <button type="button" id="create-collection-modal-close" class="scan-modal-close">&times;</button>
+      </div>
+      <div class="scan-modal-body">
+        <label for="create-collection-name">Collection name</label>
+        <input type="text" id="create-collection-name" class="settings-text-input" placeholder="e.g. Charizards, Vintage WOTC" style="margin-top:6px;">
+        <button type="button" id="create-collection-save-btn" class="backup-btn backup-btn-primary" style="margin-top:14px;">Create</button>
+        <div class="backup-note" id="create-collection-note"></div>
+      </div>
     </div>
   </div>
 
@@ -4768,77 +4938,107 @@
         <svg id="settings-header-avatar-placeholder" class="profile-avatar-placeholder" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.2-8 5v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1c0-2.8-3.6-5-8-5Z"/></svg>
       </div>
       <div class="settings-profile-name" id="settings-header-name">JSBreakz</div>
+      <div class="settings-profile-email" id="settings-header-email"></div>
     </div>
 
-    <div class="dash-welcome">Settings</div>
-
-    <div class="settings-section">
-      <div class="settings-section-title">API Keys</div>
-      <div class="settings-section-desc">Used to identify and price cards via Scan Card, Search Cards, and Look Up Price in the Store tab. Manage keys separately for each trading card game.</div>
-      <button type="button" id="settings-api-keys-btn" class="backup-btn backup-btn-primary">API Keys</button>
+    <div class="account-tabs" id="account-tabs">
+      <button type="button" class="account-tab active" data-panel="stats">Stats</button>
+      <button type="button" class="account-tab" data-panel="settings">Settings</button>
     </div>
 
-    <div class="settings-section">
-      <div class="settings-section-title">Logo</div>
-      <div class="settings-section-desc">Update the photo shown above your name on the Dashboard.</div>
-      <div class="profile-avatar-wrap" style="align-items: flex-start;">
-        <div class="profile-avatar" id="settings-avatar" role="button" tabindex="0" aria-label="Change logo photo">
-          <img id="settings-avatar-img" style="display:none;" alt="Logo photo">
-          <svg id="settings-avatar-placeholder" class="profile-avatar-placeholder" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.2-8 5v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1c0-2.8-3.6-5-8-5Z"/></svg>
-          <div class="profile-avatar-overlay">Change</div>
+    <div id="account-stats-panel">
+      <div class="scoreboard cols-2">
+        <div class="stat stock">
+          <div class="label">Cards Sold</div>
+          <div class="value" id="account-stats-cards-sold">0</div>
         </div>
-        <input type="file" id="settings-photo-input" accept="image/*" style="display:none;">
-        <button type="button" id="settings-photo-remove" class="profile-photo-remove" style="display:none;">Remove photo</button>
+        <div class="stat profit">
+          <div class="label">Profit</div>
+          <div class="value" id="account-stats-profit">$0.00</div>
+        </div>
+      </div>
+
+      <div class="settings-section-title" style="margin-top:24px;">Top Selling Cards</div>
+      <div id="account-top-cards"></div>
+      <div class="empty" id="account-top-cards-empty" style="display:none;">
+        <strong>No sales yet</strong>
+        Your top-selling cards will show up here once you make a sale.
       </div>
     </div>
 
-    <div class="settings-section">
-      <div class="settings-section-title">Data</div>
-      <div class="backup-section" style="margin: 0; padding: 0; border: none; background: none;">
-        <div class="backup-desc">Download everything — inventory, sale history, shows, and your logo photo — as one file. Keep it somewhere safe.</div>
+    <div id="account-settings-panel" style="display:none;">
+      <div class="settings-section">
+        <div class="settings-section-title">Photo / Logo</div>
+        <div class="settings-section-desc">Update the photo shown above your name on the Dashboard.</div>
+        <div class="profile-avatar-wrap" style="align-items: flex-start;">
+          <div class="profile-avatar" id="settings-avatar" role="button" tabindex="0" aria-label="Change logo photo">
+            <img id="settings-avatar-img" style="display:none;" alt="Logo photo">
+            <svg id="settings-avatar-placeholder" class="profile-avatar-placeholder" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.2-8 5v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1c0-2.8-3.6-5-8-5Z"/></svg>
+            <div class="profile-avatar-overlay">Change</div>
+          </div>
+          <input type="file" id="settings-photo-input" accept="image/*" style="display:none;">
+          <button type="button" id="settings-photo-remove" class="profile-photo-remove" style="display:none;">Remove photo</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Account Username &amp; Email</div>
+        <div class="settings-section-desc">Your username is also shown in the "Welcome back" greeting on your Dashboard. Changing your email requires confirming it from a link sent to the new address.</div>
+        <div class="field">
+          <label for="settings-username-input">Username</label>
+          <input type="text" id="settings-username-input" class="settings-text-input" placeholder="Username" style="width:100%;">
+        </div>
+        <div class="field">
+          <label for="settings-email-input">Email</label>
+          <input type="email" id="settings-email-input" class="settings-text-input" placeholder="you@example.com" style="width:100%;">
+        </div>
+        <button type="button" id="settings-account-save" class="backup-btn backup-btn-primary">Save Account Info</button>
+        <div class="backup-note" id="settings-account-note"></div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Export Inventory</div>
+        <div class="settings-section-desc">Download your Active inventory as a spreadsheet or PDF — handy for insurance records, consignment, or sharing with a partner.</div>
         <div class="backup-actions">
-          <button type="button" id="backup-export-btn" class="backup-btn backup-btn-primary">Download Backup</button>
-          <button type="button" id="backup-import-btn" class="backup-btn backup-btn-secondary">Restore from Backup</button>
-          <input type="file" id="backup-import-input" accept="application/json,.json" style="display:none;">
+          <button type="button" id="settings-active-export-csv" class="backup-btn backup-btn-secondary">Export CSV</button>
+          <button type="button" id="settings-active-export-pdf" class="backup-btn backup-btn-secondary">Export PDF</button>
         </div>
-        <div class="backup-note" id="backup-note"></div>
       </div>
-    </div>
 
-    <div class="settings-section">
-      <div class="settings-section-title">Export Inventory</div>
-      <div class="settings-section-desc">Download your Active inventory as a spreadsheet or PDF — handy for insurance records, consignment, or sharing with a partner.</div>
-      <div class="backup-actions">
-        <button type="button" id="settings-active-export-csv" class="backup-btn backup-btn-secondary">Export CSV</button>
-        <button type="button" id="settings-active-export-pdf" class="backup-btn backup-btn-secondary">Export PDF</button>
+      <div class="settings-section">
+        <div class="settings-section-title">Data Backup</div>
+        <div class="backup-section" style="margin: 0; padding: 0; border: none; background: none;">
+          <div class="backup-desc">Download everything — inventory, sale history, shows, and your logo photo — as one file. Keep it somewhere safe.</div>
+          <div class="backup-actions">
+            <button type="button" id="backup-export-btn" class="backup-btn backup-btn-primary">Download Backup</button>
+            <button type="button" id="backup-import-btn" class="backup-btn backup-btn-secondary">Restore from Backup</button>
+            <input type="file" id="backup-import-input" accept="application/json,.json" style="display:none;">
+          </div>
+          <div class="backup-note" id="backup-note"></div>
+        </div>
       </div>
-    </div>
 
-    <div class="settings-section">
-      <div class="settings-section-title">Account</div>
-      <div class="settings-section-desc">The username and email tied to your login. Your username is also shown in the "Welcome back" greeting on your Dashboard. Changing your email requires confirming it from a link sent to the new address.</div>
-      <div class="field">
-        <label for="settings-username-input">Username</label>
-        <input type="text" id="settings-username-input" class="settings-text-input" placeholder="Username" style="width:100%;">
+      <div class="settings-section">
+        <div class="settings-section-title">API Keys</div>
+        <div class="settings-section-desc">Used to identify and price cards via Scan Card, Search Cards, and Look Up Price in the Store tab. Manage keys separately for each trading card game.</div>
+        <button type="button" id="settings-api-keys-btn" class="backup-btn backup-btn-primary">API Keys</button>
       </div>
-      <div class="field">
-        <label for="settings-email-input">Email</label>
-        <input type="email" id="settings-email-input" class="settings-text-input" placeholder="you@example.com" style="width:100%;">
+
+      <div class="settings-section settings-danger-zone">
+        <div class="settings-section-title" style="color: var(--loss);">Danger Zone</div>
+        <div class="settings-section-desc">Permanently delete every active and sold card in your inventory. Your schedule and shows are not affected. This cannot be undone.</div>
+        <button type="button" id="delete-all-inventory-btn" class="confirm-danger-btn" style="flex: none; padding: 10px 20px;">Delete All Inventory</button>
       </div>
-      <button type="button" id="settings-account-save" class="backup-btn backup-btn-primary">Save Account Info</button>
-      <div class="backup-note" id="settings-account-note"></div>
-    </div>
 
-    <div class="settings-section">
-      <div class="settings-section-title">Session</div>
-      <div class="settings-section-desc">Sign out of this device.</div>
-      <button type="button" id="logout-btn" class="backup-btn backup-btn-secondary">Log out</button>
-    </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Account Info</div>
+        <div class="account-info-row">
+          <span>User since</span>
+          <span id="settings-user-since">&mdash;</span>
+        </div>
+      </div>
 
-    <div class="settings-section settings-danger-zone">
-      <div class="settings-section-title" style="color: var(--loss);">Danger Zone</div>
-      <div class="settings-section-desc">Permanently delete every active and sold card in your inventory. Your schedule and shows are not affected. This cannot be undone.</div>
-      <button type="button" id="delete-all-inventory-btn" class="confirm-danger-btn" style="flex: none; padding: 10px 20px;">Delete All Inventory</button>
+      <button type="button" id="logout-btn" class="account-logout-btn">Log out</button>
     </div>
   </div>
 
@@ -4917,6 +5117,32 @@
 
   </div>
 
+  <div id="quickadd-destination-modal-overlay" class="scan-modal-overlay" style="display:none;">
+    <div class="scan-modal">
+      <div class="scan-modal-header">
+        <div class="scan-modal-title">Quick Add</div>
+        <button type="button" id="quickadd-destination-close" class="scan-modal-close">&times;</button>
+      </div>
+      <div class="scan-modal-body">
+        <div class="settings-section-desc" style="margin-top:0;">Where should this card go?</div>
+        <div class="add-menu-options">
+          <button type="button" class="add-menu-option" data-target="inventory">
+            <span class="add-menu-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="7" width="18" height="4" rx="1"/><path d="M4 11h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9Z"/></svg></span>
+            <span class="add-menu-title">Inventory</span>
+          </button>
+          <button type="button" class="add-menu-option" data-target="collection">
+            <span class="add-menu-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="7" width="18" height="4" rx="1"/><path d="M4 11h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9Z"/></svg></span>
+            <span class="add-menu-title">Collection</span>
+          </button>
+          <button type="button" class="add-menu-option" data-target="wishlist">
+            <span class="add-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.35-9.5-8.5C.8 8 2 4.5 5.5 4A5 5 0 0 1 12 7a5 5 0 0 1 6.5-3c3.5.5 4.7 4 3 7.5C19 15.65 12 20 12 20Z"/></svg></span>
+            <span class="add-menu-title">Wish List</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="add-menu-modal-overlay" class="scan-modal-overlay" style="display:none;">
     <div class="scan-modal">
       <div class="scan-modal-header">
@@ -4951,7 +5177,7 @@
   <div id="manual-add-modal-overlay" class="scan-modal-overlay" style="display:none;">
     <div class="scan-modal manual-add-modal">
       <div class="scan-modal-header">
-        <div class="scan-modal-title">Add Card Manually</div>
+        <div class="scan-modal-title" id="manual-add-modal-title">Add Card Manually</div>
         <button type="button" id="manual-add-modal-close" class="scan-modal-close">&times;</button>
       </div>
       <div class="scan-modal-body">
@@ -4979,7 +5205,7 @@
             <input id="in-set" type="text" placeholder="Set name" style="display:none; margin-top:6px;">
           </div>
           <div class="field price">
-            <label for="in-price">Cost ($ paid)</label>
+            <label for="in-price" id="manual-add-price-label">Cost ($ paid)</label>
             <input id="in-price" type="number" step="0.01" min="0" placeholder="0.00">
           </div>
           <div class="field price">
@@ -4991,7 +5217,7 @@
             <div class="lookup-price-note" id="lookup-price-note"></div>
           </div>
         </div>
-        <div class="intake-grid-2">
+        <div class="intake-grid-2" id="manual-add-secondary-fields">
           <div class="field">
             <label for="in-condition">Condition</label>
             <select id="in-condition">
@@ -5460,7 +5686,7 @@
     ? window.storage
     : (window.__BINDER_FORCE_BRIDGE__ ? bridgeStorageApi : indexedDbStorageApi);
 
-  let data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, grossHistory: [], wishlist: [], collection: [], dataVersion: 1 };
+  let data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, grossHistory: [], wishlist: [], collection: [], collections: [], dataVersion: 1 };
   let currentTab = 'active';
   let sortMode = 'recent';
   let allInventorySortMode = 'name';
@@ -5621,6 +5847,10 @@
       const username = (user.user_metadata && user.user_metadata.username) || '';
       document.getElementById('settings-username-input').value = username;
       document.getElementById('settings-email-input').value = user.email || '';
+      document.getElementById('settings-header-email').textContent = user.email || '';
+      if (user.created_at){
+        document.getElementById('settings-user-since').textContent = new Date(user.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+      }
       applyUsernameToUI(username);
     } catch(err){
       console.error('Could not load account info', err);
@@ -5663,6 +5893,49 @@
       noteEl.className = 'backup-note error';
     }
   });
+
+  // ---------- Account screen: Stats / Settings tabs ----------
+
+  document.querySelectorAll('.account-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.account-tab').forEach(t => t.classList.toggle('active', t === tab));
+      const panel = tab.dataset.panel;
+      document.getElementById('account-stats-panel').style.display = panel === 'stats' ? 'block' : 'none';
+      document.getElementById('account-settings-panel').style.display = panel === 'settings' ? 'block' : 'none';
+      if (panel === 'stats') renderAccountStats();
+    });
+  });
+
+  function renderAccountStats(){
+    const cardsSoldEl = document.getElementById('account-stats-cards-sold');
+    if (!cardsSoldEl) return; // screen not in the DOM yet on first paint
+
+    const soldOnly = data.sold.filter(c => (c.reason || 'SOLD') === 'SOLD');
+    const profit = soldOnly.reduce((sum, c) => sum + Number(c.profit || 0), 0);
+    cardsSoldEl.textContent = soldOnly.length;
+    document.getElementById('account-stats-profit').textContent = money(profit);
+
+    const listEl = document.getElementById('account-top-cards');
+    const emptyEl = document.getElementById('account-top-cards-empty');
+    if (soldOnly.length === 0){
+      listEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+
+    const top3 = [...soldOnly].sort((a, b) => b.salePrice - a.salePrice).slice(0, 3);
+    listEl.innerHTML = top3.map((c, i) => `
+      <div class="account-top-card-row">
+        <div class="account-top-card-rank">${i + 1}</div>
+        ${c.photo ? `<img class="account-top-card-photo" src="${c.photo}" alt="${escapeHtml(c.name)}">` : ''}
+        <div class="account-top-card-info">
+          <div class="account-top-card-name">${escapeHtml(c.name)}</div>
+          <div class="account-top-card-value">${money(c.salePrice)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
 
   // ---------- Delete all inventory (Settings danger zone) ----------
 
@@ -5737,13 +6010,14 @@
         data.grossHistory = Array.isArray(parsed.grossHistory) ? parsed.grossHistory : [];
         data.wishlist = Array.isArray(parsed.wishlist) ? parsed.wishlist : [];
         data.collection = Array.isArray(parsed.collection) ? parsed.collection : [];
+        data.collections = Array.isArray(parsed.collections) ? parsed.collections : [];
         data.dataVersion = parsed.dataVersion;
       }
     } catch(e){
       // No row for this user yet (first time logging in) — start fresh.
       // The first saveData() call will create it.
       console.error('Could not load inventory from Supabase', e);
-      data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, grossHistory: [], wishlist: [], collection: [], dataVersion: CURRENT_DATA_VERSION };
+      data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, grossHistory: [], wishlist: [], collection: [], collections: [], dataVersion: CURRENT_DATA_VERSION };
     }
     applyProfilePhotoToUI();
     document.getElementById('loading-msg').style.display = 'none';
@@ -7143,14 +7417,103 @@
   }
 
   // ---------- Collection ----------
+  // ---------- Multiple named collections ----------
+  let currentCollectionId = null;
+
+  // Guarantees at least one collection exists and currentCollectionId
+  // points at a real one — runs after data loads. Also backfills any
+  // collection cards saved before this feature existed (no collectionId
+  // yet) into that first collection, so nothing goes missing.
+  function ensureDefaultCollection(){
+    if (!Array.isArray(data.collections)) data.collections = [];
+    if (data.collections.length === 0){
+      data.collections.push({ id: uid(), name: 'My Collection', dateCreated: Date.now() });
+    }
+    const validIds = new Set(data.collections.map(c => c.id));
+    if (!currentCollectionId || !validIds.has(currentCollectionId)){
+      currentCollectionId = data.collections[0].id;
+    }
+    let backfilled = false;
+    data.collection.forEach(c => {
+      if (!c.collectionId || !validIds.has(c.collectionId)){
+        c.collectionId = data.collections[0].id;
+        backfilled = true;
+      }
+    });
+    if (backfilled) saveData();
+  }
+
+  function renderCollectionSwitcher(containerId){
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    ensureDefaultCollection();
+    el.className = 'tcg-tabs';
+    el.innerHTML = data.collections.map(c => `
+      <button type="button" class="tcg-tab${c.id === currentCollectionId ? ' active' : ''}" data-id="${c.id}">${escapeHtml(c.name)}</button>
+    `).join('') + `
+      <button type="button" class="tcg-tab new-collection-tab" id="${containerId}-new-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New
+      </button>
+    `;
+    el.querySelectorAll('.tcg-tab[data-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentCollectionId = btn.dataset.id;
+        renderCollectionHome();
+        renderMyCollection();
+      });
+    });
+    document.getElementById(`${containerId}-new-btn`).addEventListener('click', openCreateCollectionModal);
+  }
+
+  function openCreateCollectionModal(){
+    document.getElementById('create-collection-name').value = '';
+    document.getElementById('create-collection-note').textContent = '';
+    document.getElementById('create-collection-modal-overlay').style.display = 'flex';
+    setTimeout(() => document.getElementById('create-collection-name').focus(), 0);
+  }
+  function closeCreateCollectionModal(){
+    document.getElementById('create-collection-modal-overlay').style.display = 'none';
+  }
+  document.getElementById('create-collection-modal-close').addEventListener('click', closeCreateCollectionModal);
+  document.getElementById('create-collection-modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'create-collection-modal-overlay') closeCreateCollectionModal();
+  });
+  document.getElementById('create-collection-save-btn').addEventListener('click', () => {
+    const input = document.getElementById('create-collection-name');
+    const name = input.value.trim();
+    const noteEl = document.getElementById('create-collection-note');
+    if (!name){
+      noteEl.textContent = 'Enter a name for this collection.';
+      noteEl.className = 'backup-note error';
+      return;
+    }
+    const newCollection = { id: uid(), name, dateCreated: Date.now() };
+    data.collections.push(newCollection);
+    currentCollectionId = newCollection.id;
+    saveData();
+    closeCreateCollectionModal();
+    renderCollectionHome();
+    renderMyCollection();
+  });
+  document.getElementById('create-collection-name').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('create-collection-save-btn').click();
+  });
+
   function renderCollectionHome(){
     const grossEl = document.getElementById('collection-stat-gross');
     if (!grossEl) return; // screen not in the DOM yet on first paint
+    ensureDefaultCollection();
+    renderCollectionSwitcher('collectionhome-switcher');
 
-    const gross = data.collection.reduce((sum, c) => sum + marketPriceOf(c), 0);
-    const totalCost = data.collection.reduce((sum, c) => sum + Number(c.price || 0), 0);
+    const current = data.collections.find(c => c.id === currentCollectionId);
+    document.getElementById('collectionhome-name').textContent = current ? current.name : '';
+
+    const items = data.collection.filter(c => c.collectionId === currentCollectionId);
+    const gross = items.reduce((sum, c) => sum + marketPriceOf(c), 0);
+    const totalCost = items.reduce((sum, c) => sum + Number(c.price || 0), 0);
     grossEl.textContent = money(gross);
-    document.getElementById('collection-stat-count').textContent = data.collection.length;
+    document.getElementById('collection-stat-count').textContent = items.length;
     document.getElementById('collection-stat-cost').textContent = money(totalCost);
   }
 
@@ -7159,10 +7522,21 @@
     const grid = document.getElementById('mycollection-grid');
     const empty = document.getElementById('mycollection-empty');
     if (!grid) return; // screen not in the DOM yet on first paint
+    ensureDefaultCollection();
+    renderCollectionSwitcher('mycollection-switcher');
 
-    countEl.textContent = `(${data.collection.length})`;
+    const current = data.collections.find(c => c.id === currentCollectionId);
+    const items = data.collection.filter(c => c.collectionId === currentCollectionId);
+    const gross = items.reduce((sum, c) => sum + marketPriceOf(c), 0);
 
-    if (data.collection.length === 0){
+    document.getElementById('mycollection-value-header').innerHTML = `
+      <span class="collection-value-header-name">${escapeHtml(current ? current.name : '')}</span>
+      <span class="collection-value-header-value">${money(gross)}</span>
+    `;
+
+    countEl.textContent = `(${items.length})`;
+
+    if (items.length === 0){
       grid.style.display = 'none';
       empty.style.display = 'block';
       grid.innerHTML = '';
@@ -7171,7 +7545,7 @@
     empty.style.display = 'none';
     grid.style.display = 'grid';
 
-    const sorted = [...data.collection].sort((a, b) => b.dateAdded - a.dateAdded);
+    const sorted = [...items].sort((a, b) => b.dateAdded - a.dateAdded);
     grid.innerHTML = sorted.map(c => `
       <div class="card-tile active-tile clickable" data-id="${c.id}">
         <div class="active-tile-photo">
@@ -7848,6 +8222,7 @@
             data.grossHistory = Array.isArray(parsed.grossHistory) ? parsed.grossHistory : [];
             data.wishlist = Array.isArray(parsed.wishlist) ? parsed.wishlist : [];
             data.collection = Array.isArray(parsed.collection) ? parsed.collection : [];
+            data.collections = Array.isArray(parsed.collections) ? parsed.collections : [];
             data.dataVersion = parsed.dataVersion;
             await saveData();
             applyProfilePhotoToUI();
@@ -8386,6 +8761,14 @@
   }
 
   function openManualAddModal(){
+    // Wish List entries don't need cost/condition/grading/quantity — hide
+    // those and relabel Cost as a Target Price when adding this way.
+    const isWishlist = addTargetMode === 'wishlist';
+    document.getElementById('manual-add-price-label').textContent = isWishlist ? 'Target price ($) — optional' : 'Cost ($ paid)';
+    document.getElementById('in-price').placeholder = isWishlist ? 'What you\u2019d want to pay' : '0.00';
+    document.getElementById('manual-add-modal-title').textContent =
+      addTargetMode === 'collection' ? 'Add to Collection' : (isWishlist ? 'Add to Wish List' : 'Add Card Manually');
+    document.getElementById('manual-add-secondary-fields').style.display = isWishlist ? 'none' : 'grid';
     document.getElementById('manual-add-modal-overlay').style.display = 'flex';
     document.getElementById('in-name').focus();
   }
@@ -9892,6 +10275,7 @@
 
       const addedAt = Date.now();
       const targetArray = mode === 'collection' ? data.collection : data.active;
+      if (mode === 'collection') ensureDefaultCollection();
       for (let i = 0; i < qty; i++){
         targetArray.push({
           id: uid(),
@@ -9903,7 +10287,8 @@
           marketPrice: marketPriceFinal,
           condition, gradedCompany, grade,
           photo: image || null,
-          dateAdded: addedAt
+          dateAdded: addedAt,
+          collectionId: mode === 'collection' ? currentCollectionId : undefined
         });
       }
       saveData();
@@ -10772,6 +11157,28 @@
     if (isNaN(qty) || qty < 1) qty = 1;
     const errorEl = document.getElementById('intake-error');
 
+    if (addTargetMode === 'wishlist'){
+      // Target price is optional here — only the name is required.
+      if (!name){
+        errorEl.style.display = 'block';
+        return;
+      }
+      errorEl.style.display = 'none';
+      data.wishlist.push({
+        id: uid(),
+        name, number, set,
+        rarity: '',
+        marketPrice,
+        targetPrice: isNaN(price) ? null : price,
+        photo: pendingPhoto,
+        dateAdded: Date.now()
+      });
+      saveData();
+      render();
+      resetManualAddForm();
+      return;
+    }
+
     if (!name || isNaN(price) || price < 0){
       errorEl.style.display = 'block';
       return;
@@ -10779,12 +11186,22 @@
     errorEl.style.display = 'none';
 
     const addedAt = Date.now();
-    for (let i = 0; i < qty; i++){
-      data.active.push({ id: uid(), name, number, set, price, marketPrice, condition, gradedCompany, grade, photo: pendingPhoto, dateAdded: addedAt });
+    if (addTargetMode === 'collection'){
+      ensureDefaultCollection();
+      for (let i = 0; i < qty; i++){
+        data.collection.push({ id: uid(), name, number, set, price, marketPrice, condition, gradedCompany, grade, photo: pendingPhoto, dateAdded: addedAt, collectionId: currentCollectionId });
+      }
+    } else {
+      for (let i = 0; i < qty; i++){
+        data.active.push({ id: uid(), name, number, set, price, marketPrice, condition, gradedCompany, grade, photo: pendingPhoto, dateAdded: addedAt });
+      }
     }
     saveData();
     render();
+    resetManualAddForm();
+  }
 
+  function resetManualAddForm(){
     document.getElementById('in-name').value = '';
     document.getElementById('in-number').value = '';
     document.getElementById('in-set').value = '';
@@ -11206,10 +11623,16 @@
   async function enterApp(){
     document.getElementById('screen-pin').style.display = 'none';
     document.getElementById('app-shell').style.display = 'block';
-    await loadData();
+    // Mode Select doesn't need any inventory/sales data to render — it's
+    // just four buttons and a username. Show it immediately instead of
+    // making the person wait on the full data fetch first; everything
+    // else loads in the background and is ready by the time they pick
+    // a mode (Store's own screens already show a skeleton loader while
+    // this finishes, same as before).
+    document.getElementById('screen-mode-select').style.display = 'block';
+    loadData();
     loadAccountInfo();
     loadApiKeys();
-    document.getElementById('screen-mode-select').style.display = 'block';
   }
 
   async function checkAuthAndShowScreen(){
@@ -11333,7 +11756,10 @@
     document.getElementById('screen-wishlist').style.display = screen === 'wishlist' ? 'block' : 'none';
     document.getElementById('screen-collectionhome').style.display = screen === 'collectionhome' ? 'block' : 'none';
     document.getElementById('screen-mycollection').style.display = screen === 'mycollection' ? 'block' : 'none';
-    if (screen === 'settings') updateAppNavHeightVar();
+    if (screen === 'settings'){
+      updateAppNavHeightVar();
+      renderAccountStats();
+    }
     if (screen === 'wishlist') renderWishlist();
     if (screen === 'collectionhome') renderCollectionHome();
     if (screen === 'mycollection') renderMyCollection();
@@ -11391,10 +11817,27 @@
     card.addEventListener('click', () => {
       const mode = card.dataset.mode;
       if (mode === 'quickadd'){
-        openAddMenuModal();
+        document.getElementById('quickadd-destination-modal-overlay').style.display = 'flex';
       } else {
         enterMode(mode);
       }
+    });
+  });
+
+  document.getElementById('quickadd-destination-close').addEventListener('click', () => {
+    document.getElementById('quickadd-destination-modal-overlay').style.display = 'none';
+  });
+  document.getElementById('quickadd-destination-modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'quickadd-destination-modal-overlay'){
+      document.getElementById('quickadd-destination-modal-overlay').style.display = 'none';
+    }
+  });
+  document.querySelectorAll('#quickadd-destination-modal-overlay .add-menu-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      addTargetMode = btn.dataset.target;
+      if (addTargetMode === 'collection') ensureDefaultCollection();
+      document.getElementById('quickadd-destination-modal-overlay').style.display = 'none';
+      openAddMenuModal();
     });
   });
 
