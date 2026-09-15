@@ -3016,6 +3016,15 @@
     font-size: 14px;
     color: var(--text);
   }
+  .transaction-detail-subtotal-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--holo);
+  }
   .transaction-detail-net-row{
     display: flex;
     align-items: center;
@@ -7237,6 +7246,7 @@
           paymentMethod: c.paymentMethod || null,
           tradeInCards: c.tradeInCards || null,
           tradeNetCash: c.tradeNetCash != null ? c.tradeNetCash : null,
+          tradeInPercent: c.tradeInPercent != null ? c.tradeInPercent : null,
           cards: []
         };
         order.push(key);
@@ -7338,6 +7348,12 @@
           <span>Trade-In Market Total</span>
           <span>${money(tradeInTotal)}</span>
         </div>
+        ${group.tradeInPercent != null ? `
+        <div class="transaction-detail-subtotal-row">
+          <span>Trade-In Value (${group.tradeInPercent}%)</span>
+          <span>${money(tradeInTotal * group.tradeInPercent / 100)}</span>
+        </div>
+        ` : ''}
       `;
       if (group.tradeNetCash != null){
         const isCredit = group.tradeNetCash > 0.004;
@@ -10177,11 +10193,13 @@
     // later (they might themselves be resold, edited, or removed by then).
     let tradeInSnapshot = null;
     let tradeNetCash = null;
+    let tradeInPercent = null;
     if (vendorPaymentMethod === 'Trade'){
       tradeInSnapshot = vendorTradeCart.map(c => ({ name: c.name, number: c.number, set: c.set, marketPrice: c.marketPrice }));
       const tradeInTotal = vendorTradeCart.reduce((sum, c) => sum + Number(c.marketPrice || 0), 0);
       const tradeInValue = tradeInTotal * (vendorTradePercent / 100);
       tradeNetCash = Math.round((marketTotal - tradeInValue) * 100) / 100;
+      tradeInPercent = vendorTradePercent;
     }
 
     vendorCart.forEach((card, i) => {
@@ -10219,7 +10237,8 @@
         paymentMethod: vendorPaymentMethod,
         transactionId,
         tradeInCards: tradeInSnapshot,
-        tradeNetCash
+        tradeNetCash,
+        tradeInPercent
       });
     });
 
