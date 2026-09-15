@@ -1956,6 +1956,7 @@
   @media (min-width: 641px){
     #screen-dashboard .scoreboard.cols-2 .stat{ text-align: center; }
     #screen-dashboard .scoreboard.cols-2 .stat .stat-marker{ justify-content: center; }
+    #screen-dashboard .scoreboard.cols-2 .stat::after{ left: 50%; right: auto; width: 80px; transform: translateX(-50%); }
   }
   .scoreboard.cols-3{ grid-template-columns: repeat(3, 1fr); }
   @media (max-width: 640px){
@@ -3866,12 +3867,15 @@
     aspect-ratio: 5 / 7;
     background: var(--ink);
     overflow: hidden;
+    padding: 16px;
   }
   .mini-tile-img{
     display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
   }
   .mini-tile-img-empty{
     width: 100%;
@@ -3885,6 +3889,7 @@
     letter-spacing: 0.04em;
     text-transform: uppercase;
     background: linear-gradient(135deg, var(--ink) 0%, var(--sleeve-2) 100%);
+    border-radius: 8px;
   }
   .mini-tile-status-badge{
     position: absolute;
