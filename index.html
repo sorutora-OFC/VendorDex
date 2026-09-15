@@ -400,6 +400,8 @@
     flex: 1 1 auto;
     min-width: 0;
   }
+  #wishlist-nav-tabs{ grid-template-columns: repeat(2, 1fr); }
+  #collection-nav-tabs{ grid-template-columns: repeat(3, 1fr); }
   @media (min-width: 640px){
     .nav-tabs{ flex: 0 0 auto; }
   }
@@ -1458,6 +1460,89 @@
     flex-wrap: wrap;
     gap: 8px;
   }
+  .masthead-actions{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ---------- Mode Select (post-login landing) ---------- */
+  .mode-select-header{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .mode-select-header h1{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: 0.01em;
+    color: var(--text);
+  }
+  .mode-select-header h1 span{
+    background: linear-gradient(120deg, var(--holo) 10%, var(--gold) 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .mode-select-welcome{
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+  .mode-select-grid{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 420px){
+    .mode-select-grid{ grid-template-columns: 1fr; }
+  }
+  .mode-select-card{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--sleeve);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px 18px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .mode-select-card:hover{
+    border-color: var(--holo);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.4), 0 0 0 1px rgba(167,139,250,0.15);
+  }
+  .mode-select-icon{
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ink);
+    border: 1px solid var(--line);
+    color: var(--holo);
+  }
+  .mode-select-icon svg{ width: 22px; height: 22px; }
+  .mode-select-title{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text);
+  }
+  .mode-select-desc{
+    font-family: 'Open Sans', sans-serif;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
   .masthead h1{
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
@@ -3563,6 +3648,39 @@
   }
   .mini-tile-body .age-badge{ align-self: flex-start; }
 
+  /* ---------- Wish List tile extras ---------- */
+  .wishlist-remove-btn{
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(18,18,20,0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+  .wishlist-remove-btn:hover{ border-color: var(--loss); color: var(--loss); }
+  .wishlist-price-row{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    gap: 8px;
+  }
+  .wishlist-target{ color: var(--holo); font-weight: 700; }
+
   /* Still used by Schedule/Submissions/Giveaways show-tiles as a generic
      "row of a status badge + action button" layout — unrelated to the
      mini-tile-photo-wrap/mini-tile-body redesign above. */
@@ -4062,15 +4180,20 @@
 
   <div id="app-shell" style="display:none;">
 
-  <div class="app-nav">
+  <div class="app-nav" id="app-nav" style="display:none;">
     <div class="masthead">
       <h1>Vendor<span>DEX</span></h1>
-      <button type="button" id="profile-nav-btn" class="profile-nav-btn" aria-label="Settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
-      </button>
+      <div class="masthead-actions">
+        <button type="button" id="mode-switch-btn" class="profile-nav-btn" aria-label="Switch mode">
+          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        </button>
+        <button type="button" id="profile-nav-btn" class="profile-nav-btn" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+        </button>
+      </div>
     </div>
     <div class="nav-right">
-      <div class="nav-tabs">
+      <div class="nav-tabs" id="store-nav-tabs">
         <button class="nav-tab active" data-screen="dashboard">
           <span class="nav-tab-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg></span>
           <span class="nav-tab-label">Home</span>
@@ -4092,6 +4215,70 @@
           <span class="nav-tab-label">Schedule</span>
         </button>
       </div>
+      <div class="nav-tabs" id="wishlist-nav-tabs" style="display:none;">
+        <button class="nav-tab active" data-screen="search">
+          <span class="nav-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <span class="nav-tab-label">Explore</span>
+        </button>
+        <button class="nav-tab" data-screen="wishlist">
+          <span class="nav-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.35-9.5-8.5C.8 8 2 4.5 5.5 4A5 5 0 0 1 12 7a5 5 0 0 1 6.5-3c3.5.5 4.7 4 3 7.5C19 15.65 12 20 12 20Z"/></svg></span>
+          <span class="nav-tab-label">Wish List</span>
+        </button>
+      </div>
+      <div class="nav-tabs" id="collection-nav-tabs" style="display:none;">
+        <button class="nav-tab active" data-screen="collectionhome">
+          <span class="nav-tab-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg></span>
+          <span class="nav-tab-label">Home</span>
+        </button>
+        <button class="nav-tab" data-screen="search">
+          <span class="nav-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <span class="nav-tab-label">Explore</span>
+        </button>
+        <button class="nav-tab" data-screen="mycollection">
+          <span class="nav-tab-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="7" width="18" height="4" rx="1"/><path d="M4 11h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9Z"/></svg></span>
+          <span class="nav-tab-label">My Collection</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-mode-select" style="display:none;">
+    <div class="mode-select-header">
+      <h1>Vendor<span>DEX</span></h1>
+      <button type="button" id="mode-select-settings-btn" class="profile-nav-btn" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+      </button>
+    </div>
+    <div class="mode-select-welcome">Welcome back, <span id="mode-select-username">there</span></div>
+    <div class="mode-select-grid">
+      <button type="button" class="mode-select-card" data-mode="store">
+        <div class="mode-select-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 7h12l1 13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L6 7Z"/><path d="M9 7V6a3 3 0 0 1 6 0v1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="mode-select-title">Store</div>
+        <div class="mode-select-desc">Inventory, sales, shows &amp; profit.</div>
+      </button>
+      <button type="button" class="mode-select-card" data-mode="wishlist">
+        <div class="mode-select-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.35-9.5-8.5C.8 8 2 4.5 5.5 4A5 5 0 0 1 12 7a5 5 0 0 1 6.5-3c3.5.5 4.7 4 3 7.5C19 15.65 12 20 12 20Z"/></svg>
+        </div>
+        <div class="mode-select-title">Wish List</div>
+        <div class="mode-select-desc">Track cards you're hunting for.</div>
+      </button>
+      <button type="button" class="mode-select-card" data-mode="collection">
+        <div class="mode-select-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="7" width="18" height="4" rx="1"/><path d="M4 11h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9Z"/></svg>
+        </div>
+        <div class="mode-select-title">Collection</div>
+        <div class="mode-select-desc">Cards you're keeping, not selling.</div>
+      </button>
+      <button type="button" class="mode-select-card" data-mode="quickadd">
+        <div class="mode-select-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="mode-select-title">Quick Add</div>
+        <div class="mode-select-desc">Search, scan, or add a card fast.</div>
+      </button>
     </div>
   </div>
 
@@ -4536,6 +4723,44 @@
     </div>
   </div>
 
+  <div id="screen-wishlist" style="display:none;">
+    <div class="dash-welcome">Wish List <span id="wishlist-count-label" style="color:var(--muted); font-size:14px;"></span></div>
+    <div class="settings-section-desc" style="margin:0 0 18px;">Cards you're hunting for. Add them from the Explore tab.</div>
+    <div class="grid" id="wishlist-grid" style="display:none;"></div>
+    <div class="empty" id="wishlist-empty" style="display:none;">
+      <strong>Your wish list is empty</strong>
+      Browse Explore and tap a card to add it here.
+    </div>
+  </div>
+
+  <div id="screen-collectionhome" style="display:none;">
+    <div class="dash-welcome">My Collection</div>
+    <div class="scoreboard cols-3">
+      <div class="stat gross">
+        <div class="label">Collection Value (Market)</div>
+        <div class="value" id="collection-stat-gross">$0.00</div>
+      </div>
+      <div class="stat stock">
+        <div class="label">Cards</div>
+        <div class="value" id="collection-stat-count">0</div>
+      </div>
+      <div class="stat profit">
+        <div class="label">Total Cost</div>
+        <div class="value" id="collection-stat-cost">$0.00</div>
+      </div>
+    </div>
+    <div class="settings-section-desc" style="margin:8px 0 0;">Cards you're keeping — tracked for value, never shown in Store or Vendor Mode. Add them from the Explore tab.</div>
+  </div>
+
+  <div id="screen-mycollection" style="display:none;">
+    <div class="dash-welcome">My Collection <span id="mycollection-count-label" style="color:var(--muted); font-size:14px;"></span></div>
+    <div class="grid" id="mycollection-grid" style="display:none;"></div>
+    <div class="empty" id="mycollection-empty" style="display:none;">
+      <strong>No cards in your collection yet</strong>
+      Browse Explore and tap a card to add it here.
+    </div>
+  </div>
+
   <div id="screen-settings" style="display:none;">
     <div class="settings-profile-header" id="settings-profile-header">
       <div class="settings-profile-avatar">
@@ -4700,20 +4925,25 @@
       </div>
       <div class="scan-modal-body">
         <div class="add-menu-options">
+          <button type="button" id="add-menu-search-btn" class="add-menu-option">
+            <span class="add-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <span class="add-menu-title">Search Cards</span>
+          </button>
           <button type="button" id="add-menu-scan-btn" class="add-menu-option">
             <span class="add-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5 7.5 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.5L15 3.5H9Z"/><circle cx="12" cy="13" r="3.5"/></svg></span>
             <span class="add-menu-title">Scan Card</span>
+          </button>
+          <button type="button" id="add-menu-slab-btn" class="add-menu-option">
+            <span class="add-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><rect x="8" y="6.5" width="8" height="11" rx="1"/><line x1="8" y1="4" x2="16" y2="4"/></svg></span>
+            <span class="add-menu-title">Scan Slab</span>
           </button>
           <button type="button" id="add-menu-manual-btn" class="add-menu-option">
             <span class="add-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
             <span class="add-menu-title">Add Manually</span>
           </button>
-          <button type="button" id="add-menu-search-btn" class="add-menu-option">
-            <span class="add-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-            <span class="add-menu-title">Search Cards</span>
-          </button>
         </div>
         <input type="file" id="scan-file-input" accept="image/*" capture="environment" style="display:none;">
+        <input type="file" id="scan-slab-file-input" accept="image/*" capture="environment" style="display:none;">
       </div>
     </div>
   </div>
@@ -5230,7 +5460,7 @@
     ? window.storage
     : (window.__BINDER_FORCE_BRIDGE__ ? bridgeStorageApi : indexedDbStorageApi);
 
-  let data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, grossHistory: [], dataVersion: 1 };
+  let data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, grossHistory: [], wishlist: [], collection: [], dataVersion: 1 };
   let currentTab = 'active';
   let sortMode = 'recent';
   let allInventorySortMode = 'name';
@@ -5373,6 +5603,7 @@
     const n = (name || '').trim();
     document.getElementById('dash-username').textContent = n || 'there';
     document.getElementById('settings-header-name').textContent = n || 'Add your username';
+    document.getElementById('mode-select-username').textContent = n || 'there';
   }
 
   // ---------- Account (username/email — Supabase Auth) ----------
@@ -5504,13 +5735,15 @@
         data.storeName = typeof parsed.storeName === 'string' ? parsed.storeName : '';
         data.profilePhoto = parsed.profilePhoto || null;
         data.grossHistory = Array.isArray(parsed.grossHistory) ? parsed.grossHistory : [];
+        data.wishlist = Array.isArray(parsed.wishlist) ? parsed.wishlist : [];
+        data.collection = Array.isArray(parsed.collection) ? parsed.collection : [];
         data.dataVersion = parsed.dataVersion;
       }
     } catch(e){
       // No row for this user yet (first time logging in) — start fresh.
       // The first saveData() call will create it.
       console.error('Could not load inventory from Supabase', e);
-      data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, grossHistory: [], dataVersion: CURRENT_DATA_VERSION };
+      data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, grossHistory: [], wishlist: [], collection: [], dataVersion: CURRENT_DATA_VERSION };
     }
     applyProfilePhotoToUI();
     document.getElementById('loading-msg').style.display = 'none';
@@ -5547,6 +5780,9 @@
     renderSchedule();
     renderSubmissions();
     renderGiveaways();
+    renderWishlist();
+    renderCollectionHome();
+    renderMyCollection();
     document.getElementById('tab-active-count').textContent = `(${data.active.length})`;
     document.getElementById('tab-inactive-count').textContent = `(${data.sold.length})`;
   }
@@ -6859,6 +7095,136 @@
     });
   }
 
+  // ---------- Wish List ----------
+  function renderWishlist(){
+    const countEl = document.getElementById('wishlist-count-label');
+    const grid = document.getElementById('wishlist-grid');
+    const empty = document.getElementById('wishlist-empty');
+    if (!grid) return; // screen not in the DOM yet on first paint
+
+    countEl.textContent = `(${data.wishlist.length})`;
+
+    if (data.wishlist.length === 0){
+      grid.style.display = 'none';
+      empty.style.display = 'block';
+      grid.innerHTML = '';
+      return;
+    }
+    empty.style.display = 'none';
+    grid.style.display = 'grid';
+
+    const sorted = [...data.wishlist].sort((a, b) => b.dateAdded - a.dateAdded);
+    grid.innerHTML = sorted.map(c => `
+      <div class="card-tile mini-tile" data-id="${c.id}">
+        <div class="mini-tile-photo-wrap">
+          ${c.photo
+            ? `<img class="mini-tile-img" src="${c.photo}" alt="${escapeHtml(c.name)}" loading="lazy" decoding="async">`
+            : `<div class="mini-tile-img-empty">No Photo</div>`}
+          <button type="button" class="wishlist-remove-btn" data-id="${c.id}" aria-label="Remove">&times;</button>
+        </div>
+        <div class="mini-tile-body">
+          <div class="mini-tile-name">${escapeHtml(c.name)}</div>
+          <div class="wishlist-price-row">
+            <span>Market ${c.marketPrice != null ? money(c.marketPrice) : '&mdash;'}</span>
+            ${c.targetPrice != null ? `<span class="wishlist-target">Target ${money(c.targetPrice)}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    grid.querySelectorAll('.wishlist-remove-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        data.wishlist = data.wishlist.filter(c => c.id !== btn.dataset.id);
+        saveData();
+        renderWishlist();
+      });
+    });
+  }
+
+  // ---------- Collection ----------
+  function renderCollectionHome(){
+    const grossEl = document.getElementById('collection-stat-gross');
+    if (!grossEl) return; // screen not in the DOM yet on first paint
+
+    const gross = data.collection.reduce((sum, c) => sum + marketPriceOf(c), 0);
+    const totalCost = data.collection.reduce((sum, c) => sum + Number(c.price || 0), 0);
+    grossEl.textContent = money(gross);
+    document.getElementById('collection-stat-count').textContent = data.collection.length;
+    document.getElementById('collection-stat-cost').textContent = money(totalCost);
+  }
+
+  function renderMyCollection(){
+    const countEl = document.getElementById('mycollection-count-label');
+    const grid = document.getElementById('mycollection-grid');
+    const empty = document.getElementById('mycollection-empty');
+    if (!grid) return; // screen not in the DOM yet on first paint
+
+    countEl.textContent = `(${data.collection.length})`;
+
+    if (data.collection.length === 0){
+      grid.style.display = 'none';
+      empty.style.display = 'block';
+      grid.innerHTML = '';
+      return;
+    }
+    empty.style.display = 'none';
+    grid.style.display = 'grid';
+
+    const sorted = [...data.collection].sort((a, b) => b.dateAdded - a.dateAdded);
+    grid.innerHTML = sorted.map(c => `
+      <div class="card-tile active-tile clickable" data-id="${c.id}">
+        <div class="active-tile-photo">
+          ${c.photo
+            ? `<img class="active-tile-img" src="${c.photo}" alt="${escapeHtml(c.name)}" loading="lazy" decoding="async">`
+            : `<div class="active-tile-img-empty">No Photo</div>`}
+          ${c.number ? `<span class="active-tile-number">#${escapeHtml(c.number)}</span>` : ''}
+        </div>
+        <div class="active-tile-body">
+          <div class="active-tile-name">${escapeHtml(c.name)}</div>
+          <div class="actions">
+            <button class="btn-sm collection-move-btn">Move to Store</button>
+            <button class="btn-sm remove collection-remove-btn">Remove</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    grid.querySelectorAll('.card-tile').forEach(tile => {
+      tile.addEventListener('click', (e) => {
+        if (e.target.closest('.actions')) return;
+        const id = tile.dataset.id;
+        const c = data.collection.find(x => x.id === id);
+        if (c) showCardDetailModal(c);
+      });
+    });
+    grid.querySelectorAll('.collection-move-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = e.target.closest('.card-tile').dataset.id;
+        const c = data.collection.find(x => x.id === id);
+        if (!c) return;
+        data.collection = data.collection.filter(x => x.id !== id);
+        data.active.push(c);
+        saveData();
+        render();
+      });
+    });
+    grid.querySelectorAll('.collection-remove-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = e.target.closest('.card-tile').dataset.id;
+        const c = data.collection.find(x => x.id === id);
+        const label = c ? `"${c.name}"` : 'this card';
+        showConfirmDialog(`Remove ${label} from your Collection? This can't be undone.`, () => {
+          data.collection = data.collection.filter(x => x.id !== id);
+          saveData();
+          renderMyCollection();
+        }, 'Remove');
+      });
+    });
+  }
+
   document.getElementById('calendar-prev-btn').addEventListener('click', () => {
     calendarMonthOffset -= 1;
     renderCalendar();
@@ -7480,6 +7846,8 @@
             data.storeName = typeof parsed.storeName === 'string' ? parsed.storeName : data.storeName;
             data.profilePhoto = parsed.profilePhoto || data.profilePhoto;
             data.grossHistory = Array.isArray(parsed.grossHistory) ? parsed.grossHistory : [];
+            data.wishlist = Array.isArray(parsed.wishlist) ? parsed.wishlist : [];
+            data.collection = Array.isArray(parsed.collection) ? parsed.collection : [];
             data.dataVersion = parsed.dataVersion;
             await saveData();
             applyProfilePhotoToUI();
@@ -8055,6 +8423,32 @@
   document.getElementById('add-menu-search-btn').addEventListener('click', () => {
     closeAddMenuModal();
     openSearchCardsModal();
+  });
+
+  // Scan Slab: no cert-number lookup (yet) — this streamlines the manual
+  // path instead: snap the slab's photo, attach it to the new record, and
+  // jump straight into the grading fields since that's the whole point of
+  // scanning a graded card rather than a raw one.
+  document.getElementById('add-menu-slab-btn').addEventListener('click', () => {
+    closeAddMenuModal();
+    document.getElementById('scan-slab-file-input').click();
+  });
+  document.getElementById('scan-slab-file-input').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try{
+      const dataUrl = await resizePhoto(file);
+      pendingPhoto = dataUrl;
+      openManualAddModal();
+      const preview = document.getElementById('photo-preview');
+      preview.src = dataUrl;
+      preview.style.display = 'block';
+      document.getElementById('photo-clear').style.display = 'inline-block';
+      document.getElementById('in-graded-company').focus();
+    } catch(err){
+      console.error('Could not process slab photo', err);
+    }
   });
 
   document.getElementById('manual-add-modal-close').addEventListener('click', closeManualAddModal);
@@ -9338,6 +9732,12 @@
     })();
   }
 
+  // Which grid a card gets added to when confirmed from Explore/Search —
+  // set whenever a mode is entered (see enterMode below). Defaults to the
+  // normal Store behavior so nothing changes unless Wish List/Collection
+  // mode is actually active.
+  let addTargetMode = 'inventory';
+
   function showScanConfirm(card){
     const body = document.getElementById('scan-modal-body');
     const image = (card.images && (card.images.large || card.images.small)) || '';
@@ -9345,13 +9745,14 @@
     const setName = card.set ? card.set.name : '';
     const printedTotal = card.set ? card.set.printedTotal : '';
     const hasExtraStats = card._lowPrice != null || card._change7d != null || card._change30d != null;
+    const mode = addTargetMode;
 
     function fmtChange(pct){
       const sign = pct >= 0 ? '+' : '';
       return `<span class="price-stat-value ${pct >= 0 ? 'positive' : 'negative'}">${sign}${pct.toFixed(1)}%</span>`;
     }
 
-    body.innerHTML = `
+    const headerHtml = `
       ${image ? `<img class="scan-confirm-photo" src="${image}" alt="${escapeHtml(card.name)}">` : ''}
       <div class="scan-confirm-header">
         <div class="name">${escapeHtml(card.name)}</div>
@@ -9366,6 +9767,61 @@
         </div>
       ` : ''}
       <div class="scan-confirm-error" id="scan-confirm-error"></div>
+    `;
+
+    if (mode === 'wishlist'){
+      // Wish List entries aren't physical inventory yet — no cost,
+      // quantity, condition, or grading to track. Just what it is, its
+      // current market price, and optionally what you'd want to pay.
+      body.innerHTML = headerHtml + `
+        <div class="scan-confirm-grid">
+          <div class="field-full">
+            <label for="scan-in-market">Market price ($)</label>
+            <input id="scan-in-market" type="number" step="0.01" min="0" value="${marketPrice !== null ? marketPrice : ''}">
+            <div class="api-key-note" id="scan-market-fallback-note"></div>
+          </div>
+          <div class="field-full">
+            <label for="scan-in-target">Target price ($) &mdash; optional</label>
+            <input id="scan-in-target" type="number" step="0.01" min="0" placeholder="What you'd want to pay">
+          </div>
+        </div>
+        <div class="scan-confirm-actions">
+          <button type="button" id="scan-cancel-btn" class="scan-cancel-btn">Cancel</button>
+          <button type="button" id="scan-add-btn" class="scan-add-btn">Add to Wish List</button>
+        </div>
+      `;
+
+      document.getElementById('scan-cancel-btn').addEventListener('click', closeScanModal);
+      document.getElementById('scan-add-btn').addEventListener('click', () => {
+        const marketVal = document.getElementById('scan-in-market').value;
+        const marketPriceFinal = marketVal === '' ? null : parseFloat(marketVal);
+        const targetVal = document.getElementById('scan-in-target').value;
+        const targetPrice = targetVal === '' ? null : parseFloat(targetVal);
+
+        data.wishlist.push({
+          id: uid(),
+          name: card.name,
+          number: card.number || '',
+          set: setName,
+          rarity: card.rarity || '',
+          marketPrice: marketPriceFinal,
+          targetPrice,
+          photo: image || null,
+          dateAdded: Date.now()
+        });
+        saveData();
+        render();
+        closeScanModal();
+      });
+
+      if (marketPrice === null) attemptMarketPriceFallback(card);
+      return;
+    }
+
+    // Inventory and Collection share the same fields — a Collection card
+    // is still a real physical card being tracked, just never surfaced
+    // in Store screens or Vendor Mode.
+    body.innerHTML = headerHtml + `
       <div class="scan-confirm-grid">
         <div class="field-full">
           <label for="scan-in-market">Market price ($)</label>
@@ -9411,7 +9867,7 @@
       </div>
       <div class="scan-confirm-actions">
         <button type="button" id="scan-cancel-btn" class="scan-cancel-btn">Cancel</button>
-        <button type="button" id="scan-add-btn" class="scan-add-btn">Add to Inventory</button>
+        <button type="button" id="scan-add-btn" class="scan-add-btn">${mode === 'collection' ? 'Add to Collection' : 'Add to Inventory'}</button>
       </div>
     `;
 
@@ -9435,8 +9891,9 @@
       if (isNaN(qty) || qty < 1) qty = 1;
 
       const addedAt = Date.now();
+      const targetArray = mode === 'collection' ? data.collection : data.active;
       for (let i = 0; i < qty; i++){
-        data.active.push({
+        targetArray.push({
           id: uid(),
           name: card.name,
           number: card.number || '',
@@ -10752,6 +11209,7 @@
     await loadData();
     loadAccountInfo();
     loadApiKeys();
+    document.getElementById('screen-mode-select').style.display = 'block';
   }
 
   async function checkAuthAndShowScreen(){
@@ -10872,7 +11330,13 @@
     document.getElementById('screen-schedule').style.display = screen === 'schedule' ? 'block' : 'none';
     document.getElementById('screen-settings').style.display = screen === 'settings' ? 'block' : 'none';
     document.getElementById('screen-search').style.display = screen === 'search' ? 'block' : 'none';
+    document.getElementById('screen-wishlist').style.display = screen === 'wishlist' ? 'block' : 'none';
+    document.getElementById('screen-collectionhome').style.display = screen === 'collectionhome' ? 'block' : 'none';
+    document.getElementById('screen-mycollection').style.display = screen === 'mycollection' ? 'block' : 'none';
     if (screen === 'settings') updateAppNavHeightVar();
+    if (screen === 'wishlist') renderWishlist();
+    if (screen === 'collectionhome') renderCollectionHome();
+    if (screen === 'mycollection') renderMyCollection();
   }
 
   // The Settings profile header needs to stick just below the main
@@ -10893,6 +11357,52 @@
   });
 
   document.getElementById('profile-nav-btn').addEventListener('click', () => switchScreen('settings'));
+
+  // ---------- Mode Select (post-login landing) ----------
+  let currentMode = null;
+
+  function enterMode(mode){
+    currentMode = mode;
+    addTargetMode = mode === 'wishlist' ? 'wishlist' : (mode === 'collection' ? 'collection' : 'inventory');
+
+    document.getElementById('screen-mode-select').style.display = 'none';
+    document.getElementById('app-nav').style.display = 'flex';
+    document.getElementById('store-nav-tabs').style.display = mode === 'store' ? 'grid' : 'none';
+    document.getElementById('wishlist-nav-tabs').style.display = mode === 'wishlist' ? 'grid' : 'none';
+    document.getElementById('collection-nav-tabs').style.display = mode === 'collection' ? 'grid' : 'none';
+    updateAppNavHeightVar();
+
+    if (mode === 'store') switchScreen('dashboard');
+    else if (mode === 'wishlist') switchScreen('search');
+    else if (mode === 'collection') switchScreen('collectionhome');
+  }
+
+  function backToModeSelect(){
+    currentMode = null;
+    addTargetMode = 'inventory';
+    document.getElementById('app-nav').style.display = 'none';
+    document.querySelectorAll('#app-shell > div[id^="screen-"]').forEach(el => {
+      if (el.id !== 'screen-mode-select') el.style.display = 'none';
+    });
+    document.getElementById('screen-mode-select').style.display = 'block';
+  }
+
+  document.querySelectorAll('.mode-select-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const mode = card.dataset.mode;
+      if (mode === 'quickadd'){
+        openAddMenuModal();
+      } else {
+        enterMode(mode);
+      }
+    });
+  });
+
+  document.getElementById('mode-switch-btn').addEventListener('click', backToModeSelect);
+  document.getElementById('mode-select-settings-btn').addEventListener('click', () => {
+    enterMode('store');
+    switchScreen('settings');
+  });
 
   document.getElementById('go-ledger-btn').addEventListener('click', () => {
     document.querySelector('.nav-tab[data-screen="ledger"]').click();
