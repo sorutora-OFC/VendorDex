@@ -1736,7 +1736,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
-    background: var(--sleeve);
+    background: var(--ink);
     border: 1px solid var(--line);
     border-radius: 16px;
     padding: 22px 18px;
@@ -1756,9 +1756,25 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--ink);
-    border: 1px solid var(--line);
+    background: var(--sleeve);
+    border: 1px solid rgba(167,139,250,0.45);
     color: var(--holo);
+    box-shadow: 0 0 10px rgba(167,139,250,0.55), 0 0 22px rgba(139,92,246,0.3);
+  }
+  .mode-select-card[data-mode="wishlist"] .mode-select-icon{
+    border-color: rgba(244,114,182,0.5);
+    color: #F472B6;
+    box-shadow: 0 0 10px rgba(244,114,182,0.55), 0 0 22px rgba(244,114,182,0.3);
+  }
+  .mode-select-card[data-mode="collection"] .mode-select-icon{
+    border-color: rgba(251,191,36,0.5);
+    color: #FBBF24;
+    box-shadow: 0 0 10px rgba(251,191,36,0.55), 0 0 22px rgba(251,191,36,0.3);
+  }
+  .mode-select-card[data-mode="quickadd"] .mode-select-icon{
+    border-color: rgba(52,211,153,0.5);
+    color: #34D399;
+    box-shadow: 0 0 10px rgba(52,211,153,0.55), 0 0 22px rgba(52,211,153,0.3);
   }
   .mode-select-icon svg{ width: 22px; height: 22px; }
   .mode-select-title{
@@ -3819,6 +3835,7 @@
     gap: 10px;
     flex: 1;
   }
+  .active-tile-body .actions{ margin-top: auto; }
   .active-tile-name{
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
@@ -4601,6 +4618,10 @@
   </div>
 
   <div id="screen-mode-select" style="display:none;">
+    <div class="pin-bg-shape pin-bg-shape-1"></div>
+    <div class="pin-bg-shape pin-bg-shape-2"></div>
+    <div class="pin-bg-shape pin-bg-shape-3"></div>
+    <div class="pin-bg-shape pin-bg-shape-4"></div>
     <div class="mode-select-header">
       <h1>Vendor<span>DEX</span></h1>
       <button type="button" id="mode-select-settings-btn" class="profile-nav-btn" aria-label="Settings">
@@ -5227,6 +5248,13 @@
           <button type="button" id="settings-active-export-csv" class="backup-btn backup-btn-secondary">Export CSV</button>
           <button type="button" id="settings-active-export-pdf" class="backup-btn backup-btn-secondary">Export PDF</button>
         </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Refresh Market Prices</div>
+        <div class="settings-section-desc">Market prices are only fetched when a card is added — they don't update on their own after that. Run this to re-check every Active card against pokemontcg.io (and PokéWallet as a backup) and update its stored market price. Pokémon cards only, for now. Large inventories can take a few minutes — you can keep using the app while it runs.</div>
+        <button type="button" id="refresh-prices-btn" class="backup-btn backup-btn-primary">Refresh Market Prices</button>
+        <div class="backup-note" id="refresh-prices-note"></div>
       </div>
 
       <div class="settings-section">
@@ -9542,6 +9570,105 @@
   }
 
   document.getElementById('lookup-price-btn').addEventListener('click', runPriceLookup);
+
+  // ---------- Refresh Market Prices (Settings) ----------
+  // Market price is only ever fetched at add-time, so a card's stored
+  // value can go stale — this re-checks each Active card against the
+  // same precise pokemontcg.io query runPriceLookup uses, falling back
+  // to a broader name search (which also tries PokéWallet) if that
+  // comes up empty. Silent/headless version of that same lookup — no
+  // UI modal, just returns a price or null.
+  async function fetchCurrentMarketPrice(name, number, set){
+    try{
+      const queryParts = [`name:"${name.replace(/"/g, '')}"`];
+      const cleanNumber = (number || '').replace(/[^0-9]/g, '');
+      if (cleanNumber) queryParts.push(`number:${cleanNumber}`);
+      if (set) queryParts.push(`set.name:"${set.replace(/"/g, '')}"`);
+      const query = queryParts.join(' ');
+      const url = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(query)}&pageSize=5`;
+      const res = await fetch(url, { headers: { 'X-Api-Key': apiKeys.pokemontcg } });
+      if (res.ok){
+        const json = await res.json();
+        const cards = json.data || [];
+        let match = null;
+        if (cards.length === 1){
+          match = cards[0];
+        } else if (cards.length > 1 && cleanNumber){
+          match = cards.find(c => c.number === number || c.number === cleanNumber) || null;
+        }
+        if (match){
+          const price = extractMarketPrice(match);
+          if (price !== null) return price;
+        }
+      }
+    } catch(err){
+      console.warn('Precise price refresh lookup failed for', name, err);
+    }
+
+    // No precise match — fall back to the same broader multi-source name
+    // search used elsewhere (tries pokemontcg.io again, then PokéWallet).
+    try{
+      const { entries } = await multiSourceCardSearch(name);
+      if (entries.length === 1){
+        const price = extractMarketPrice(entries[0].card);
+        if (price !== null) return price;
+      } else if (entries.length > 1 && number){
+        const exact = entries.find(e => e.card.number === number);
+        if (exact){
+          const price = extractMarketPrice(exact.card);
+          if (price !== null) return price;
+        }
+      }
+    } catch(err){
+      console.warn('Broader price refresh lookup failed for', name, err);
+    }
+    return null;
+  }
+
+  let refreshingPrices = false;
+  async function refreshAllMarketPrices(){
+    if (refreshingPrices) return;
+    const cards = data.active.filter(c => c.name);
+    const btn = document.getElementById('refresh-prices-btn');
+    const noteEl = document.getElementById('refresh-prices-note');
+
+    if (cards.length === 0){
+      noteEl.textContent = 'No Active cards to check yet.';
+      noteEl.className = 'backup-note';
+      return;
+    }
+
+    refreshingPrices = true;
+    btn.disabled = true;
+    let updated = 0, failed = 0;
+
+    for (let i = 0; i < cards.length; i++){
+      const card = cards[i];
+      noteEl.textContent = `Refreshing prices\u2026 ${i + 1}/${cards.length}`;
+      noteEl.className = 'backup-note';
+      try{
+        const newPrice = await fetchCurrentMarketPrice(card.name, card.number, card.set);
+        if (newPrice !== null && newPrice !== card.marketPrice){
+          card.marketPrice = newPrice;
+          updated++;
+        }
+      } catch(err){
+        failed++;
+      }
+      // Paced rather than fired all at once, to stay well under
+      // pokemontcg.io's rate limits on a large inventory.
+      await new Promise(r => setTimeout(r, 400));
+    }
+
+    saveData();
+    render();
+    refreshingPrices = false;
+    btn.disabled = false;
+    noteEl.textContent = `Done \u2014 updated ${updated} of ${cards.length} card${cards.length === 1 ? '' : 's'}.${failed > 0 ? ` ${failed} couldn't be checked.` : ''}`;
+    noteEl.className = 'backup-note success';
+  }
+
+  document.getElementById('refresh-prices-btn').addEventListener('click', refreshAllMarketPrices);
 
   // ---------- Set dropdown ----------
   // The Pokémon TCG API only covers English-language sets — there's no
