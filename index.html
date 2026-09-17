@@ -3029,6 +3029,90 @@
     margin-bottom: 10px;
   }
   .card-tile.show-tile.past{ opacity: 0.6; }
+
+  .show-remove-btn{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    z-index: 3;
+  }
+  .show-remove-btn:hover{ border-color: var(--loss); color: var(--loss); }
+
+  .show-live-badge{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--loss);
+  }
+  .show-live-dot{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--loss);
+    box-shadow: 0 0 6px var(--loss), 0 0 12px var(--loss);
+    animation: show-live-pulse 1.4s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes show-live-pulse{
+    0%, 100%{ opacity: 1; transform: scale(1); }
+    50%{ opacity: 0.4; transform: scale(0.75); }
+  }
+
+  .show-action-row{
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .show-start-btn, .show-end-btn{
+    flex: 1;
+    border-radius: 999px;
+    padding: 8px 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid;
+    background: var(--ink);
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .show-start-btn{ color: var(--profit); border-color: rgba(16,185,129,0.4); }
+  .show-start-btn:hover{ background: var(--profit); color: var(--ink); border-color: var(--profit); }
+  .show-end-btn{ color: var(--loss); border-color: rgba(232,105,122,0.4); }
+  .show-end-btn:hover{ background: var(--loss); color: var(--ink); border-color: var(--loss); }
+
+  .show-sales-total-row{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text);
+  }
+  .show-sales-total-row span:last-child{ font-weight: 700; color: var(--profit); }
+
   .field select{
     width: 100%;
     background: var(--ink);
@@ -5758,6 +5842,16 @@
     </div>
   </div>
 
+  <div id="show-log-modal-overlay" class="scan-modal-overlay" style="display:none;">
+    <div class="scan-modal">
+      <div class="scan-modal-header">
+        <div class="scan-modal-title" id="show-log-title">Show</div>
+        <button type="button" id="show-log-modal-close" class="scan-modal-close">&times;</button>
+      </div>
+      <div class="scan-modal-body" id="show-log-body"></div>
+    </div>
+  </div>
+
   <div id="transaction-detail-modal-overlay" class="scan-modal-overlay" style="display:none;">
     <div class="scan-modal">
       <div class="scan-modal-header">
@@ -7322,30 +7416,168 @@
     renderShowsGridTiles(shows);
   }
 
+  function getShowSalesTotal(showId){
+    const records = data.sold.filter(c => c.showId === showId && (c.reason || 'SOLD') === 'SOLD');
+    const total = records.reduce((sum, c) => sum + Number(c.salePrice || 0), 0);
+    return { count: records.length, total };
+  }
+
+  function startShow(id){
+    // Only one show can be live at a time — starting this one ends any
+    // other, so Vendor Mode always knows exactly which show (if any) to
+    // tag a sale with.
+    data.shows.forEach(s => { s.isLive = (s.id === id); });
+    saveData();
+    render();
+  }
+
+  function endShow(id){
+    const show = data.shows.find(s => s.id === id);
+    if (show) show.isLive = false;
+    saveData();
+    render();
+  }
+
+  function getShowTransactionGroups(showId){
+    const records = data.sold.filter(c => c.showId === showId && (c.reason || 'SOLD') === 'SOLD');
+    const groups = {};
+    const order = [];
+    records.forEach(c => {
+      const key = c.transactionId || c.id;
+      if (!groups[key]){
+        groups[key] = {
+          transactionId: key,
+          dateSold: c.dateSold,
+          paymentMethod: c.paymentMethod || null,
+          tradeInCards: c.tradeInCards || null,
+          tradeNetCash: c.tradeNetCash != null ? c.tradeNetCash : null,
+          tradeInPercent: c.tradeInPercent != null ? c.tradeInPercent : null,
+          cards: []
+        };
+        order.push(key);
+      }
+      groups[key].cards.push(c);
+    });
+    return order.map(k => groups[k]).sort((a, b) => b.dateSold - a.dateSold);
+  }
+
+  function showShowLogModal(show){
+    const groups = getShowTransactionGroups(show.id);
+    const total = groups.reduce((sum, g) => sum + g.cards.reduce((s2, c) => s2 + Number(c.salePrice || 0), 0), 0);
+
+    document.getElementById('show-log-title').textContent = show.name;
+    const body = document.getElementById('show-log-body');
+
+    if (groups.length === 0){
+      body.innerHTML = `
+        <div class="empty" style="margin:0;">
+          <strong>No sales yet</strong>
+          ${show.isLive ? 'Sales made in Vendor Mode while this show is live will show up here.' : 'This show ended with no recorded sales.'}
+        </div>
+      `;
+      document.getElementById('show-log-modal-overlay').style.display = 'flex';
+      return;
+    }
+
+    body.innerHTML = `
+      <div>
+        ${groups.map((g, i) => {
+          const gTotal = g.cards.reduce((sum, c) => sum + Number(c.salePrice || 0), 0);
+          const methodLabel = g.paymentMethod || 'Not recorded';
+          return `
+            <button type="button" class="transaction-row show-log-row" data-index="${i}">
+              <div class="transaction-row-main">
+                <div class="transaction-row-title">${g.cards.length} card${g.cards.length === 1 ? '' : 's'} &middot; ${escapeHtml(methodLabel)}</div>
+                <div class="transaction-row-meta">${formatDateTime(g.dateSold)}</div>
+              </div>
+              <div class="transaction-row-amount">${money(gTotal)}</div>
+            </button>
+          `;
+        }).join('')}
+      </div>
+      <div class="transaction-detail-total-row">
+        <span>${show.isLive ? 'Sales So Far' : 'Total Sales'}</span>
+        <span>${money(total)}</span>
+      </div>
+    `;
+    body.querySelectorAll('.show-log-row').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index, 10);
+        showTransactionDetailModal(groups[idx]);
+      });
+    });
+
+    document.getElementById('show-log-modal-overlay').style.display = 'flex';
+  }
+
+  document.getElementById('show-log-modal-close').addEventListener('click', () => {
+    document.getElementById('show-log-modal-overlay').style.display = 'none';
+  });
+  document.getElementById('show-log-modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'show-log-modal-overlay') document.getElementById('show-log-modal-overlay').style.display = 'none';
+  });
+
   function renderShowsGridTiles(shows){
     const grid = document.getElementById('schedule-grid');
     const todayStr = todayDateStr();
     grid.innerHTML = shows.map(s => {
       const isPast = s.date < todayStr;
+      const isLive = !!s.isLive;
+      const showSales = getShowSalesTotal(s.id);
       return `
-      <div class="card-tile show-tile${isPast ? ' past' : ''}" data-id="${s.id}">
+      <div class="card-tile show-tile clickable${isPast ? ' past' : ''}" data-id="${s.id}">
+        <button type="button" class="show-remove-btn" aria-label="Remove show">&minus;</button>
         <div class="name">${escapeHtml(s.name)}</div>
         <div class="meta">${formatShowDate(s.date)}${s.time ? ' &middot; ' + formatShowTime(s.time) : ''}</div>
         ${s.location ? `<div class="show-location">${escapeHtml(s.location)}</div>` : ''}
         <div class="mini-tile-footer">
           <span class="status-badge status-${isPast ? 'sold' : 'active'}">${isPast ? 'Past' : 'Upcoming'}</span>
-          <button type="button" class="btn-sm remove show-delete-btn">Remove</button>
+          ${isLive ? `<span class="show-live-badge"><span class="show-live-dot"></span>Live</span>` : ''}
         </div>
+        <div class="show-action-row">
+          ${isLive
+            ? `<button type="button" class="show-end-btn">End Show</button>`
+            : `<button type="button" class="show-start-btn">Start Show</button>`}
+        </div>
+        ${(isLive || showSales.count > 0) ? `
+          <div class="show-sales-total-row">
+            <span>${isLive ? 'Sales So Far' : 'Total Sales'}</span>
+            <span>${money(showSales.total)}</span>
+          </div>
+        ` : ''}
       </div>
     `;
     }).join('');
 
-    grid.querySelectorAll('.show-delete-btn').forEach(btn => {
+    grid.querySelectorAll('.show-remove-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const id = e.target.closest('.show-tile').dataset.id;
         const show = data.shows.find(s => s.id === id);
         const name = show ? show.name : 'this show';
         showConfirmDialog(`Remove "${name}" from your schedule? This can't be undone.`, () => deleteShow(id));
+      });
+    });
+
+    grid.querySelectorAll('.show-start-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        startShow(e.target.closest('.show-tile').dataset.id);
+      });
+    });
+    grid.querySelectorAll('.show-end-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        endShow(e.target.closest('.show-tile').dataset.id);
+      });
+    });
+
+    grid.querySelectorAll('.show-tile').forEach(tile => {
+      tile.addEventListener('click', (e) => {
+        if (e.target.closest('.show-remove-btn') || e.target.closest('.show-start-btn') || e.target.closest('.show-end-btn')) return;
+        const id = tile.dataset.id;
+        const show = data.shows.find(s => s.id === id);
+        if (show) showShowLogModal(show);
       });
     });
   }
@@ -7365,7 +7597,7 @@
     }
     errorEl.style.display = 'none';
 
-    data.shows.push({ id: uid(), name, date, time, location, expectedAttendance, dateAdded: Date.now() });
+    data.shows.push({ id: uid(), name, date, time, location, expectedAttendance, dateAdded: Date.now(), isLive: false });
     saveData();
     render();
 
@@ -8219,10 +8451,18 @@
     const groups = {};
     const order = [];
     soldOnly.forEach(c => {
-      const key = c.transactionId || c.id;
+      // Sales made during a show are grouped under that show rather than
+      // as separate per-checkout entries — a show can span many Vendor
+      // Mode transactions, but it reads as one line here.
+      const key = c.showId ? `show:${c.showId}` : (c.transactionId || c.id);
       if (!groups[key]){
+        const show = c.showId ? data.shows.find(s => s.id === c.showId) : null;
         groups[key] = {
           transactionId: key,
+          isShow: !!c.showId,
+          showId: c.showId || null,
+          showName: show ? show.name : null,
+          showIsLive: show ? !!show.isLive : false,
           dateSold: c.dateSold,
           paymentMethod: c.paymentMethod || null,
           tradeInCards: c.tradeInCards || null,
@@ -8233,6 +8473,8 @@
         order.push(key);
       }
       groups[key].cards.push(c);
+      // A show group sorts by its most recent sale, not its first one.
+      if (c.dateSold > groups[key].dateSold) groups[key].dateSold = c.dateSold;
     });
     return order.map(k => groups[k]).sort((a, b) => b.dateSold - a.dateSold);
   }
@@ -8263,11 +8505,13 @@
     listEl.innerHTML = groups.map((g, i) => {
       const total = g.cards.reduce((sum, c) => sum + Number(c.salePrice || 0), 0);
       const cardCount = g.cards.length;
-      const methodLabel = g.paymentMethod || 'Not recorded';
+      const titleHtml = g.isShow
+        ? `${g.showIsLive ? '<span class="show-live-dot" style="margin-right:6px;"></span>' : ''}${escapeHtml(g.showName || 'Show')} &middot; ${cardCount} card${cardCount === 1 ? '' : 's'}`
+        : `${cardCount} card${cardCount === 1 ? '' : 's'} &middot; ${escapeHtml(g.paymentMethod || 'Not recorded')}`;
       return `
         <button type="button" class="transaction-row" data-index="${i}">
           <div class="transaction-row-main">
-            <div class="transaction-row-title">${cardCount} card${cardCount === 1 ? '' : 's'} &middot; ${escapeHtml(methodLabel)}</div>
+            <div class="transaction-row-title">${titleHtml}</div>
             <div class="transaction-row-meta">${formatDateTime(g.dateSold)}</div>
           </div>
           <div class="transaction-row-amount">${money(total)}</div>
@@ -8278,7 +8522,13 @@
     listEl.querySelectorAll('.transaction-row').forEach(btn => {
       btn.addEventListener('click', () => {
         const idx = parseInt(btn.dataset.index, 10);
-        showTransactionDetailModal(groups[idx]);
+        const g = groups[idx];
+        if (g.isShow){
+          const show = data.shows.find(s => s.id === g.showId);
+          if (show) showShowLogModal(show);
+        } else {
+          showTransactionDetailModal(g);
+        }
       });
     });
   }
@@ -11384,6 +11634,12 @@
       tradeInPercent = vendorTradePercent;
     }
 
+    // If a show is currently live, every sale made in Vendor Mode belongs
+    // to it — it'll show up grouped under that show's name in Transactions
+    // instead of as its own separate line, and in the show's own log.
+    const liveShow = data.shows.find(s => s.isLive);
+    const liveShowId = liveShow ? liveShow.id : null;
+
     vendorCart.forEach((card, i) => {
       const itemPrice = getVendorItemPrice(card);
       let allocated;
@@ -11420,7 +11676,8 @@
         transactionId,
         tradeInCards: tradeInSnapshot,
         tradeNetCash,
-        tradeInPercent
+        tradeInPercent,
+        showId: liveShowId
       });
     });
 
@@ -12087,6 +12344,7 @@
   // ---------- Dashboard / Ledger nav ----------
 
   function switchScreen(screen){
+    window.scrollTo(0, 0);
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.screen === screen));
     document.getElementById('screen-dashboard').style.display = screen === 'dashboard' ? 'block' : 'none';
     document.getElementById('screen-ledger').style.display = screen === 'ledger' ? 'block' : 'none';
@@ -12145,6 +12403,7 @@
   }
 
   function backToModeSelect(){
+    window.scrollTo(0, 0);
     currentMode = null;
     addTargetMode = 'inventory';
     document.getElementById('app-nav').style.display = 'none';
