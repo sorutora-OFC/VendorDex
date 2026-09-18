@@ -4717,13 +4717,13 @@
         </button>
       </div>
       <div class="nav-tabs" id="wishlist-nav-tabs" style="display:none;">
-        <button class="nav-tab active" data-screen="search">
-          <span class="nav-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-          <span class="nav-tab-label">Explore</span>
-        </button>
-        <button class="nav-tab" data-screen="wishlist">
+        <button class="nav-tab active" data-screen="wishlist">
           <span class="nav-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.35-9.5-8.5C.8 8 2 4.5 5.5 4A5 5 0 0 1 12 7a5 5 0 0 1 6.5-3c3.5.5 4.7 4 3 7.5C19 15.65 12 20 12 20Z"/></svg></span>
           <span class="nav-tab-label">Wish List</span>
+        </button>
+        <button class="nav-tab" data-screen="search">
+          <span class="nav-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <span class="nav-tab-label">Explore</span>
         </button>
       </div>
       <div class="nav-tabs" id="collection-nav-tabs" style="display:none;">
@@ -10329,12 +10329,6 @@
   });
 
   let exploreSetsLoaded = false;
-  document.querySelector('.nav-tab[data-screen="search"]').addEventListener('click', () => {
-    if (!exploreSetsLoaded){
-      exploreSetsLoaded = true;
-      renderExploreSetsList();
-    }
-  });
 
   // ---------- One Piece (via tcgapi.dev, through a CORS proxy) ----------
   // tcgapi.dev sends Access-Control-Allow-Origin: https://tcgapi.dev on
@@ -12452,6 +12446,14 @@
     if (screen === 'wishlist') renderWishlist();
     if (screen === 'collectionhome') renderCollectionHome();
     if (screen === 'mycollection') renderMyCollection();
+    // Explore's Pokémon set list lazy-loads on first visit — checked here
+    // (rather than on a single nav-tab's click) so it fires no matter
+    // which of Explore's three entry points (Store, Wish List, or
+    // Collection's own tab) or which mode brought you to this screen.
+    if (screen === 'search' && !exploreSetsLoaded){
+      exploreSetsLoaded = true;
+      renderExploreSetsList();
+    }
   }
 
   // The Settings profile header needs to stick just below the main
@@ -12488,7 +12490,7 @@
     updateAppNavHeightVar();
 
     if (mode === 'store') switchScreen('dashboard');
-    else if (mode === 'wishlist') switchScreen('search');
+    else if (mode === 'wishlist') switchScreen('wishlist');
     else if (mode === 'collection') switchScreen('collectionhome');
   }
 
