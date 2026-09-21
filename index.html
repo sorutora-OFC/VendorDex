@@ -6860,11 +6860,10 @@
   }
 
   function getMergedAllInventory(){
+    // Sold cards live in Transactions for history — no need to duplicate
+    // them here, so All Inventory only ever shows what you currently own.
     const activeEntries = data.active.map(c => ({ name: c.name, set: c.set, number: c.number, status: 'active', dateAdded: c.dateAdded, photo: c.photo, record: c }));
-    const soldEntries = data.sold
-      .filter(c => (c.reason || 'SOLD') === 'SOLD')
-      .map(c => ({ name: c.name, set: c.set, number: c.number, status: 'sold', photo: c.photo, record: c }));
-    const combined = activeEntries.concat(soldEntries);
+    const combined = activeEntries;
 
     const groups = {};
     combined.forEach(c => {
