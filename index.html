@@ -6483,7 +6483,21 @@
     return parsed;
   }
 
+  // Mode Select shows immediately after login, before loadData()'s fetch
+  // finishes in the background — which means it's possible to add a card
+  // (via Quick Add, reachable instantly) before that fetch resolves.
+  // Without this guard, loadData() would then blindly overwrite `data`
+  // with the snapshot it fetched (taken before the add), silently
+  // discarding the just-added card from memory — and the next save
+  // anywhere in the app would persist that regression back to the
+  // database, permanently losing it. This flag makes loadData() defer to
+  // whatever's already in memory if anything changed locally while its
+  // fetch was still in flight.
+  let initialLoadPending = false;
+  let localChangeDuringLoad = false;
+
   async function loadData(){
+    initialLoadPending = true;
     try{
       // getSession() reads the already-cached local session instead of
       // making a fresh network round-trip to revalidate it (getUser()
@@ -6500,29 +6514,42 @@
         .eq('user_id', authUser.id);
       if (error) throw error;
 
-      const parsed = rows && rows.length > 0 ? migrateData(rows[0].data || {}) : null;
-      if (parsed){
-        data.active = Array.isArray(parsed.active) ? parsed.active : [];
-        data.sold = Array.isArray(parsed.sold) ? parsed.sold : [];
-        data.shows = Array.isArray(parsed.shows) ? parsed.shows : [];
-        data.submissions = Array.isArray(parsed.submissions) ? parsed.submissions : [];
-        data.giveaways = Array.isArray(parsed.giveaways) ? parsed.giveaways : [];
-        // A brand-new account has no store name or photo saved yet —
-        // both stay blank/null until set in Settings, per-account.
-        data.storeName = typeof parsed.storeName === 'string' ? parsed.storeName : '';
-        data.profilePhoto = parsed.profilePhoto || null;
-        data.grossHistory = Array.isArray(parsed.grossHistory) ? parsed.grossHistory : [];
-        data.wishlist = Array.isArray(parsed.wishlist) ? parsed.wishlist : [];
-        data.collection = Array.isArray(parsed.collection) ? parsed.collection : [];
-        data.collections = Array.isArray(parsed.collections) ? parsed.collections : [];
-        data.dataVersion = parsed.dataVersion;
+      if (localChangeDuringLoad){
+        // The person already made a change (and it's already being saved
+        // by that action's own saveData() call) before this fetch came
+        // back — trust local memory over this now-stale snapshot rather
+        // than clobbering their edit.
+        console.warn('Skipped applying loadData() result — local data changed while the fetch was in flight.');
+      } else {
+        const parsed = rows && rows.length > 0 ? migrateData(rows[0].data || {}) : null;
+        if (parsed){
+          data.active = Array.isArray(parsed.active) ? parsed.active : [];
+          data.sold = Array.isArray(parsed.sold) ? parsed.sold : [];
+          data.shows = Array.isArray(parsed.shows) ? parsed.shows : [];
+          data.submissions = Array.isArray(parsed.submissions) ? parsed.submissions : [];
+          data.giveaways = Array.isArray(parsed.giveaways) ? parsed.giveaways : [];
+          // A brand-new account has no store name or photo saved yet —
+          // both stay blank/null until set in Settings, per-account.
+          data.storeName = typeof parsed.storeName === 'string' ? parsed.storeName : '';
+          data.profilePhoto = parsed.profilePhoto || null;
+          data.grossHistory = Array.isArray(parsed.grossHistory) ? parsed.grossHistory : [];
+          data.wishlist = Array.isArray(parsed.wishlist) ? parsed.wishlist : [];
+          data.collection = Array.isArray(parsed.collection) ? parsed.collection : [];
+          data.collections = Array.isArray(parsed.collections) ? parsed.collections : [];
+          data.dataVersion = parsed.dataVersion;
+        }
       }
     } catch(e){
       // No row for this user yet (first time logging in) — start fresh.
-      // The first saveData() call will create it.
+      // The first saveData() call will create it. But if a local change
+      // already happened during this fetch, don't stomp it with a blank
+      // slate either.
       console.error('Could not load inventory from Supabase', e);
-      data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, grossHistory: [], wishlist: [], collection: [], collections: [], dataVersion: CURRENT_DATA_VERSION };
+      if (!localChangeDuringLoad){
+        data = { active: [], sold: [], shows: [], submissions: [], giveaways: [], storeName: '', profilePhoto: null, grossHistory: [], wishlist: [], collection: [], collections: [], dataVersion: CURRENT_DATA_VERSION };
+      }
     }
+    initialLoadPending = false;
     applyProfilePhotoToUI();
     document.getElementById('loading-msg').style.display = 'none';
     document.getElementById('sort-bar').style.display = 'flex';
@@ -6530,6 +6557,7 @@
   }
 
   async function saveData(){
+    if (initialLoadPending) localChangeDuringLoad = true;
     try{
       const { data: sessionData, error: authError } = await window.supabase.auth.getSession();
       const authUser = sessionData && sessionData.session && sessionData.session.user;
@@ -12594,6 +12622,7 @@
     // a mode (Store's own screens already show a skeleton loader while
     // this finishes, same as before).
     document.getElementById('screen-mode-select').style.display = 'block';
+    localChangeDuringLoad = false;
     loadData();
     loadAccountInfo();
     loadApiKeys();
