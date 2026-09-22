@@ -364,6 +364,34 @@
   .auth-link:hover{ text-decoration: underline; }
 
   /* ---------- App nav ---------- */
+  #save-error-banner{
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--loss);
+    color: var(--ink);
+    padding: 10px 16px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 12.5px;
+  }
+  #save-error-retry-btn{
+    flex-shrink: 0;
+    background: var(--ink);
+    color: var(--loss);
+    border: none;
+    border-radius: 999px;
+    padding: 5px 14px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 11.5px;
+    cursor: pointer;
+  }
+
   .app-nav{
     display: flex;
     align-items: flex-start;
@@ -4778,6 +4806,11 @@
 
   <div id="app-shell" style="display:none;">
 
+  <div id="save-error-banner" style="display:none;">
+    <span id="save-error-banner-text">Couldn't save your last change — check your connection.</span>
+    <button type="button" id="save-error-retry-btn">Retry</button>
+  </div>
+
   <div class="app-nav" id="app-nav" style="display:none;">
     <div class="masthead">
       <h1>Vendor<span>DEX</span></h1>
@@ -6571,10 +6604,35 @@
           updated_at: new Date().toISOString()
         });
       if (error) throw error;
+      hideSaveErrorBanner();
+      return true;
     } catch(e){
+      // A save that fails here means whatever the person just did (added
+      // a card, completed a sale, anything) only ever changed the screen
+      // in front of them — it was never actually persisted. Surfacing
+      // that loudly beats staying silent and letting them find out days
+      // later that something's missing.
       console.error('Could not save inventory to Supabase', e);
+      showSaveErrorBanner();
+      return false;
     }
   }
+
+  function showSaveErrorBanner(){
+    document.getElementById('save-error-banner').style.display = 'flex';
+  }
+  function hideSaveErrorBanner(){
+    document.getElementById('save-error-banner').style.display = 'none';
+  }
+  document.getElementById('save-error-retry-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('save-error-retry-btn');
+    btn.disabled = true;
+    btn.textContent = 'Retrying\u2026';
+    const ok = await saveData();
+    btn.disabled = false;
+    btn.textContent = 'Retry';
+    if (ok) hideSaveErrorBanner();
+  });
 
   function render(){
     renderStats();
