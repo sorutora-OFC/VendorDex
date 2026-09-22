@@ -9600,11 +9600,16 @@
   function openManualAddModal(){
     // Wish List entries don't need cost/condition/grading/quantity — hide
     // those and relabel Cost as a Target Price when adding this way.
+    // Collection cost is optional too (a personal keeper's cost may not
+    // be known or worth tracking), so it's labeled accordingly.
     const isWishlist = addTargetMode === 'wishlist';
-    document.getElementById('manual-add-price-label').textContent = isWishlist ? 'Target price ($) — optional' : 'Cost ($ paid)';
+    const isCollection = addTargetMode === 'collection';
+    document.getElementById('manual-add-price-label').textContent = isWishlist
+      ? 'Target price ($) — optional'
+      : (isCollection ? 'Cost ($ paid) — optional' : 'Cost ($ paid)');
     document.getElementById('in-price').placeholder = isWishlist ? 'What you\u2019d want to pay' : '0.00';
     document.getElementById('manual-add-modal-title').textContent =
-      addTargetMode === 'collection' ? 'Add to Collection' : (isWishlist ? 'Add to Wish List' : 'Add Card Manually');
+      isCollection ? 'Add to Collection' : (isWishlist ? 'Add to Wish List' : 'Add Card Manually');
     document.getElementById('manual-add-secondary-fields').style.display = isWishlist ? 'none' : 'grid';
     document.getElementById('manual-add-modal-overlay').style.display = 'flex';
     document.getElementById('in-name').focus();
@@ -11142,7 +11147,7 @@
           <div class="api-key-note" id="scan-market-fallback-note"></div>
         </div>
         <div>
-          <label for="scan-in-cost">Cost — what you paid ($)</label>
+          <label for="scan-in-cost">Cost &mdash; what you paid ($)${mode === 'collection' ? ' &mdash; optional' : ''}</label>
           <input id="scan-in-cost" type="number" step="0.01" min="0" placeholder="0.00">
         </div>
         <div>
@@ -11187,12 +11192,19 @@
     document.getElementById('scan-cancel-btn').addEventListener('click', closeScanModal);
     document.getElementById('scan-add-btn').addEventListener('click', () => {
       const errorEl = document.getElementById('scan-confirm-error');
-      const cost = parseFloat(document.getElementById('scan-in-cost').value);
-      if (isNaN(cost) || cost < 0){
+      const costVal = document.getElementById('scan-in-cost').value;
+      let cost = costVal === '' ? null : parseFloat(costVal);
+      if (costVal !== '' && (isNaN(cost) || cost < 0)){
         errorEl.textContent = 'Enter what you paid for this card before adding it.';
         errorEl.style.display = 'block';
         return;
       }
+      if (mode !== 'collection' && cost === null){
+        errorEl.textContent = 'Enter what you paid for this card before adding it.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      if (cost === null) cost = 0;
       errorEl.style.display = 'none';
 
       const marketVal = document.getElementById('scan-in-market').value;
@@ -12116,21 +12128,25 @@
       return;
     }
 
-    if (!name || isNaN(price) || price < 0){
+    const costRequired = addTargetMode !== 'collection';
+    const costProvided = priceVal !== '';
+    const costInvalid = costProvided && (isNaN(price) || price < 0);
+    if (!name || (costRequired && !costProvided) || costInvalid){
       errorEl.style.display = 'block';
       return;
     }
     errorEl.style.display = 'none';
 
+    const finalPrice = costProvided ? price : 0;
     const addedAt = Date.now();
     if (addTargetMode === 'collection'){
       ensureDefaultCollection();
       for (let i = 0; i < qty; i++){
-        data.collection.push({ id: uid(), name, number, set, price, marketPrice, condition, gradedCompany, grade, photo: pendingPhoto, dateAdded: addedAt, collectionId: currentCollectionId });
+        data.collection.push({ id: uid(), name, number, set, price: finalPrice, marketPrice, condition, gradedCompany, grade, photo: pendingPhoto, dateAdded: addedAt, collectionId: currentCollectionId });
       }
     } else {
       for (let i = 0; i < qty; i++){
-        data.active.push({ id: uid(), name, number, set, price, marketPrice, condition, gradedCompany, grade, photo: pendingPhoto, dateAdded: addedAt });
+        data.active.push({ id: uid(), name, number, set, price: finalPrice, marketPrice, condition, gradedCompany, grade, photo: pendingPhoto, dateAdded: addedAt });
       }
     }
     saveData();
