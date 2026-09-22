@@ -751,6 +751,103 @@
      pricing instead of the Account page's muted gray. */
   #dash-analytics-grid .account-top-card-value{ color: #C7C9D1; }
 
+  /* ---------- Collection Home: Favorites + Set Completion ---------- */
+  .favorite-card-row{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+  }
+  .favorite-card-row:first-child{ border-top: none; }
+  .favorite-card-photo{
+    width: 30px;
+    height: 42px;
+    border-radius: 4px;
+    object-fit: cover;
+    background: var(--sleeve);
+    flex-shrink: 0;
+  }
+  .favorite-card-photo-empty{
+    width: 30px;
+    height: 42px;
+    border-radius: 4px;
+    background: var(--sleeve);
+    flex-shrink: 0;
+  }
+  .favorite-card-info{ flex: 1; min-width: 0; }
+  .favorite-card-name{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 12.5px;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .favorite-card-value{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .set-completion-row{
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+  }
+  .set-completion-row:first-child{ border-top: none; }
+  .set-completion-top{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .set-completion-name{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .set-completion-pct{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--holo);
+    flex-shrink: 0;
+  }
+  .set-completion-bar-track{
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--sleeve);
+    overflow: hidden;
+  }
+  .set-completion-bar-fill{
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--gold), var(--holo));
+  }
+  .collection-favorite-btn{
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(18,18,20,0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    z-index: 3;
+  }
+  .collection-favorite-btn svg{ width: 14px; height: 14px; }
+  .collection-favorite-btn.active{ color: var(--gold); border-color: rgba(255,200,87,0.6); }
+
   /* ---------- Account Info + Log out ---------- */
   .account-info-section{
     background: var(--ink);
@@ -5263,7 +5360,25 @@
         <div class="value" id="collection-stat-cost">$0.00</div>
       </div>
     </div>
-    <div class="settings-section-desc" style="margin:8px 0 0;">Cards you're keeping — tracked for value, never shown in Store or Vendor Mode. Add them from the Explore tab.</div>
+    <div class="settings-section-desc" style="margin:8px 0 18px;">Cards you're keeping — tracked for value, never shown in Store or Vendor Mode. Add them from the Explore tab.</div>
+
+    <div class="account-top-cards-container" style="margin-bottom:18px;">
+      <div class="account-top-cards-heading">Favorites</div>
+      <div id="collection-favorites-list"></div>
+      <div class="empty" id="collection-favorites-empty" style="display:none; margin:0;">
+        <strong>No favorites yet</strong>
+        Star up to 3 cards from My Collection to feature them here.
+      </div>
+    </div>
+
+    <div class="account-top-cards-container">
+      <div class="account-top-cards-heading">% Collected by Set</div>
+      <div id="collection-set-completion"></div>
+      <div class="empty" id="collection-set-completion-empty" style="display:none; margin:0;">
+        <strong>No sets to show yet</strong>
+        Add cards with a set and number to see completion progress.
+      </div>
+    </div>
   </div>
 
   <div id="screen-mycollection" style="display:none;">
@@ -7953,6 +8068,24 @@
     if (backfilled) saveData();
   }
 
+  // Favorites are capped at 3 per collection (not globally) — Collection
+  // Home's Favorites section shows whichever 3 are starred for whatever
+  // collection is currently selected.
+  function toggleFavorite(id){
+    const card = data.collection.find(c => c.id === id);
+    if (!card) return;
+    if (!card.favorite){
+      const currentCount = data.collection.filter(c => c.collectionId === card.collectionId && c.favorite).length;
+      if (currentCount >= 3){
+        showConfirmDialog('You can only favorite 3 cards per collection. Unstar one first.', () => {}, 'OK');
+        return;
+      }
+    }
+    card.favorite = !card.favorite;
+    saveData();
+    render();
+  }
+
   function renderCollectionSwitcher(containerId){
     const el = document.getElementById(containerId);
     if (!el) return;
@@ -8010,6 +8143,117 @@
     if (e.key === 'Enter') document.getElementById('create-collection-save-btn').click();
   });
 
+  // Session-only cache: set name -> official printed total (or null if
+  // no match found). Avoids re-querying pokemontcg.io every time
+  // Collection Home re-renders.
+  let setTotalCache = {};
+  async function getSetPrintedTotal(setName){
+    if (!setName) return null;
+    if (setTotalCache[setName] !== undefined) return setTotalCache[setName];
+    try{
+      const url = `https://api.pokemontcg.io/v2/sets?q=${encodeURIComponent(`name:"${setName.replace(/"/g, '')}"`)}&pageSize=1`;
+      const res = await fetch(url, { headers: { 'X-Api-Key': apiKeys.pokemontcg } });
+      if (res.ok){
+        const json = await res.json();
+        const set = (json.data || [])[0];
+        const total = set ? (set.printedTotal || set.total || null) : null;
+        setTotalCache[setName] = total;
+        return total;
+      }
+    } catch(err){
+      console.warn('Could not fetch set total for', setName, err);
+    }
+    setTotalCache[setName] = null;
+    return null;
+  }
+
+  function renderCollectionFavorites(items){
+    const listEl = document.getElementById('collection-favorites-list');
+    const emptyEl = document.getElementById('collection-favorites-empty');
+    if (!listEl) return;
+
+    const favorites = items.filter(c => c.favorite).slice(0, 3);
+    if (favorites.length === 0){
+      listEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    listEl.innerHTML = favorites.map(c => `
+      <div class="favorite-card-row">
+        ${c.photo ? `<img class="favorite-card-photo" src="${c.photo}" alt="${escapeHtml(c.name)}">` : '<div class="favorite-card-photo-empty"></div>'}
+        <div class="favorite-card-info">
+          <div class="favorite-card-name">${escapeHtml(c.name)}</div>
+          <div class="favorite-card-value">${money(marketPriceOf(c))}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function renderCollectionSetCompletion(items){
+    const container = document.getElementById('collection-set-completion');
+    const emptyEl = document.getElementById('collection-set-completion-empty');
+    if (!container) return;
+
+    const bySet = {};
+    items.forEach(c => {
+      if (!c.set || !c.number) return;
+      if (!bySet[c.set]) bySet[c.set] = new Set();
+      bySet[c.set].add(c.number);
+    });
+    const setNames = Object.keys(bySet);
+
+    if (setNames.length === 0){
+      container.innerHTML = '';
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    container.innerHTML = '<div class="settings-section-desc" style="margin:0;">Loading set progress\u2026</div>';
+
+    // Guards against an older/slower lookup finishing after a newer one
+    // (e.g. switching collections quickly) and overwriting fresher results.
+    const requestId = uid();
+    renderCollectionSetCompletion._latest = requestId;
+
+    const results = await Promise.all(setNames.map(async (name) => {
+      const total = await getSetPrintedTotal(name);
+      return { name, owned: bySet[name].size, total };
+    }));
+
+    if (renderCollectionSetCompletion._latest !== requestId) return;
+
+    const withTotals = results
+      .filter(r => r.total)
+      .sort((a, b) => (b.owned / b.total) - (a.owned / a.total))
+      .slice(0, 5);
+
+    if (withTotals.length === 0){
+      container.innerHTML = `
+        <div class="empty" style="margin:0;">
+          <strong>Couldn't match any sets</strong>
+          We couldn't find official set totals for these set names yet.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = withTotals.map(r => {
+      const pct = Math.min(100, Math.round((r.owned / r.total) * 100));
+      return `
+        <div class="set-completion-row">
+          <div class="set-completion-top">
+            <span class="set-completion-name">${escapeHtml(r.name)}</span>
+            <span class="set-completion-pct">${r.owned}/${r.total} &middot; ${pct}%</span>
+          </div>
+          <div class="set-completion-bar-track">
+            <div class="set-completion-bar-fill" style="width:${pct}%;"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
   function renderCollectionHome(){
     const grossEl = document.getElementById('collection-stat-gross');
     if (!grossEl) return; // screen not in the DOM yet on first paint
@@ -8025,6 +8269,9 @@
     grossEl.textContent = money(gross);
     document.getElementById('collection-stat-count').textContent = items.length;
     document.getElementById('collection-stat-cost').textContent = money(totalCost);
+
+    renderCollectionFavorites(items);
+    renderCollectionSetCompletion(items);
   }
 
   function renderMyCollection(){
@@ -8062,6 +8309,9 @@
           ${c.photo
             ? `<img class="active-tile-img" src="${c.photo}" alt="${escapeHtml(c.name)}" loading="lazy" decoding="async">`
             : `<div class="active-tile-img-empty">No Photo</div>`}
+          <button type="button" class="collection-favorite-btn${c.favorite ? ' active' : ''}" aria-label="Favorite">
+            <svg viewBox="0 0 24 24" fill="${c.favorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </button>
           ${c.number ? `<span class="active-tile-number">#${escapeHtml(c.number)}</span>` : ''}
         </div>
         <div class="active-tile-body">
@@ -8076,10 +8326,17 @@
 
     grid.querySelectorAll('.card-tile').forEach(tile => {
       tile.addEventListener('click', (e) => {
-        if (e.target.closest('.actions')) return;
+        if (e.target.closest('.actions') || e.target.closest('.collection-favorite-btn')) return;
         const id = tile.dataset.id;
         const c = data.collection.find(x => x.id === id);
         if (c) showCardDetailModal(c);
+      });
+    });
+    grid.querySelectorAll('.collection-favorite-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = e.target.closest('.card-tile').dataset.id;
+        toggleFavorite(id);
       });
     });
     grid.querySelectorAll('.collection-move-btn').forEach(btn => {
