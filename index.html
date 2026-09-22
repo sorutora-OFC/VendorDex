@@ -5215,6 +5215,7 @@
         <button type="button" class="tcg-tab" data-condition="Moderately Played">MP</button>
         <button type="button" class="tcg-tab" data-condition="Heavily Played">HP</button>
         <button type="button" class="tcg-tab" data-condition="Damaged">DMG</button>
+        <button type="button" class="tcg-tab" data-condition="__graded__">GRADED</button>
       </div>
       <div class="sort-controls" style="margin-left:auto;">
         <label for="allinventory-sort-select">Sort</label>
@@ -6339,9 +6340,9 @@
 
   async function loadAccountInfo(){
     try{
-      const { data: authData, error } = await window.supabase.auth.getUser();
-      if (error || !authData.user) throw error || new Error('Not logged in');
-      const user = authData.user;
+      const { data: sessionData, error } = await window.supabase.auth.getSession();
+      const user = sessionData && sessionData.session && sessionData.session.user;
+      if (error || !user) throw error || new Error('Not logged in');
       const username = (user.user_metadata && user.user_metadata.username) || '';
       document.getElementById('settings-username-input').value = username;
       document.getElementById('settings-email-input').value = user.email || '';
@@ -6484,13 +6485,19 @@
 
   async function loadData(){
     try{
-      const { data: authData, error: authError } = await window.supabase.auth.getUser();
-      if (authError || !authData.user) throw authError || new Error('Not logged in');
+      // getSession() reads the already-cached local session instead of
+      // making a fresh network round-trip to revalidate it (getUser()
+      // does) — by this point enterApp() has already confirmed the
+      // session is valid, so re-verifying here was pure added latency
+      // on Store's critical load path.
+      const { data: sessionData, error: authError } = await window.supabase.auth.getSession();
+      const authUser = sessionData && sessionData.session && sessionData.session.user;
+      if (authError || !authUser) throw authError || new Error('Not logged in');
 
       const { data: rows, error } = await window.supabase
         .from('inventory')
         .select('*')
-        .eq('user_id', authData.user.id);
+        .eq('user_id', authUser.id);
       if (error) throw error;
 
       const parsed = rows && rows.length > 0 ? migrateData(rows[0].data || {}) : null;
@@ -6524,13 +6531,14 @@
 
   async function saveData(){
     try{
-      const { data: authData, error: authError } = await window.supabase.auth.getUser();
-      if (authError || !authData.user) throw authError || new Error('Not logged in');
+      const { data: sessionData, error: authError } = await window.supabase.auth.getSession();
+      const authUser = sessionData && sessionData.session && sessionData.session.user;
+      if (authError || !authUser) throw authError || new Error('Not logged in');
 
       const { error } = await window.supabase
         .from('inventory')
         .upsert({
-          user_id: authData.user.id,
+          user_id: authUser.id,
           data: data,
           updated_at: new Date().toISOString()
         });
@@ -7070,7 +7078,9 @@
     }
 
     let merged = allMerged;
-    if (allInventoryConditionFilter !== 'all'){
+    if (allInventoryConditionFilter === '__graded__'){
+      merged = merged.filter(c => c.sampleRecord && c.sampleRecord.gradedCompany);
+    } else if (allInventoryConditionFilter !== 'all'){
       merged = merged.filter(c => c.sampleRecord && c.sampleRecord.condition === allInventoryConditionFilter);
     }
 
